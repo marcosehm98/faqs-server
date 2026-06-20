@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Centro de Ayuda</title>
+<link rel="icon" href="/faqs-logihub/favicon.ico" type="image/x-icon" id="faviconLink">
+<link id="fontLink" rel="stylesheet" href="https://fonts.cdnfonts.com/css/satoshi">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --font-body: 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+    --bg: #F9FAFB;
+    --surface: #FFFFFF;
+    --border: #E5E7EB;
+    --text-primary: #111827;
+    --text-secondary: #6B7280;
+    --accent: #0578ED;
+    --accent-hover: #045FBB;
+    --accent-light: #D9ECFE;
+    --accent-mid: #C0DFFE;
+    --tag-bg: #F3F4F6;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05);
+    --radius: 8px;
+    --radius-sm: 6px;
+  }
+
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text-primary); min-height: 100vh; line-height: 1.5; overflow-x: hidden; }
+
+  /* HEADER */
+  .site-header {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 64px; display: flex; align-items: center; gap: 24px;
+    position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm);
+    width: 100%;
+  }
+  .logo { display: flex; align-items: center; min-height: 30px; flex-shrink: 0; }
+  .logo-full { height: 30px; width: auto; display: block; }
+  .header-search { flex: 1; max-width: 420px; margin-left: 8px; position: relative; }
+  .header-search input {
+    width: 100%; padding: 9px 14px 9px 40px; border: 1px solid var(--border); border-radius: 8px;
+    font-size: 0.875rem; font-family: var(--font-body); background: var(--surface); outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s; color: var(--text-primary);
+  }
+  .header-search input::placeholder { color: #9CA3AF; }
+  .header-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(5,120,237,0.12); }
+  .header-search .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: #9CA3AF; font-size: 16px; pointer-events: none; line-height: 1;
+  }
+
+  /* LAYOUT */
+  .app-layout { display: flex; min-height: calc(100vh - 64px); width: 100%; }
+  .sidebar { width: 240px; min-width: 240px; flex-shrink: 0; background: var(--surface); border-right: 1px solid var(--border); padding: 20px 0; position: sticky; top: 64px; height: calc(100vh - 64px); overflow-y: auto; }
+  .sidebar-section { padding: 0 16px 8px; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; }
+  .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; font-size: 0.875rem; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .sidebar-item:hover { background: var(--bg); color: var(--text-primary); }
+  .sidebar-item.active { background: var(--accent-light); color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+  .sidebar-item .count { margin-left: auto; background: var(--tag-bg); color: var(--text-secondary); font-size: 0.72rem; padding: 1px 7px; border-radius: 99px; font-weight: 600; }
+  .sidebar-item.active .count { background: rgba(5,120,237,0.12); color: var(--accent); }
+  .sidebar-group { margin-bottom: 4px; }
+  .sidebar-group-title { font-weight: 600; color: var(--text-primary); }
+  .sidebar-group-title .sidebar-group-label { flex: 1; min-width: 0; }
+  .sidebar-chevron {
+    width: 22px; height: 22px; min-width: 22px; border: none; border-radius: 6px;
+    background: transparent; color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem;
+    transition: transform 0.2s, background 0.15s, color 0.15s; flex-shrink: 0; padding: 0;
+  }
+  .sidebar-chevron:hover { background: var(--bg); color: var(--text-primary); }
+  .sidebar-group.open .sidebar-chevron { transform: rotate(90deg); color: var(--accent); }
+  .sidebar-children { display: none; }
+  .sidebar-group.open .sidebar-children { display: block; }
+  .sidebar-subitem { padding-left: 34px; font-size: 0.82rem; }
+  .sidebar-subitem .count { font-size: 0.68rem; }
+
+  .main-content { flex: 1; min-width: 0; width: 100%; padding: 32px 40px; }
+
+  /* SEARCH */
+  .search-bar { position: relative; margin-bottom: 28px; }
+  .search-bar input { width: 100%; padding: 12px 16px 12px 44px; border: 1.5px solid var(--border); border-radius: var(--radius); font-size: 0.95rem; font-family: var(--font-body); background: var(--surface); outline: none; transition: border-color 0.2s; box-shadow: var(--shadow-sm); }
+  .search-bar input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 18px; pointer-events: none; }
+
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-family: var(--font-body); font-size: 1.45rem; font-weight: 600; letter-spacing: -0.02em; }
+  .results-count { font-size: 0.8rem; color: var(--text-secondary); }
+  .faq-updated {
+    font-size: 0.78rem; color: var(--text-secondary);
+    margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* FAQ CARDS */
+  .faq-list { display: flex; flex-direction: column; gap: 8px; }
+  .faq-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: box-shadow 0.2s, border-color 0.2s; }
+  .faq-card:hover { box-shadow: var(--shadow-md); border-color: #D1D5DB; }
+  .faq-card.open { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(5,120,237,0.12); }
+
+  .faq-question { display: flex; align-items: center; gap: 12px; padding: 16px 20px; cursor: pointer; user-select: none; }
+  .faq-question-text { flex: 1; font-weight: 500; font-size: 0.95rem; }
+  .faq-share {
+    width: 30px; height: 30px; min-width: 30px; border: none; border-radius: 50%;
+    background: var(--bg); color: var(--text-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .faq-share:hover { background: var(--accent-light); color: var(--accent); }
+  .faq-chevron { width: 24px; height: 24px; min-width: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; transition: transform 0.25s, background 0.2s; color: var(--text-secondary); font-size: 13px; }
+  .faq-card.shared-highlight { animation: pulse-border 1.8s ease; }
+  @keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(5,120,237,0.12); }
+    50% { box-shadow: 0 0 0 6px rgba(5,120,237,0.2); }
+  }
+  .share-toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: rgba(20, 24, 32, 0.92); color: #fff; padding: 12px 22px;
+    border-radius: 10px; font-size: 0.875rem; font-weight: 500; z-index: 10000;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18); max-width: 90vw; text-align: center;
+    backdrop-filter: blur(8px); letter-spacing: 0.01em;
+  }
+  .share-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .faq-card.open .faq-chevron { transform: rotate(180deg); background: var(--accent-light); color: var(--accent); }
+
+  .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
+  .faq-card.open .faq-answer { max-height: 3000px; border-top: 1px solid var(--border); }
+  .faq-answer-inner { padding: 20px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.75; }
+  .faq-answer-inner p { margin: 0 0 12px; }
+  .faq-answer-inner p:last-child { margin-bottom: 0; }
+  .faq-answer-inner strong { font-weight: 600; color: var(--text-primary); }
+  .faq-answer-inner em { font-style: italic; }
+  .faq-answer-inner ul { margin: 8px 0 12px; padding-left: 1.35rem; }
+  .faq-answer-inner li { margin-bottom: 6px; }
+  .faq-answer-inner li:last-child { margin-bottom: 0; }
+
+  .faq-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .tag { padding: 3px 10px; border-radius: 99px; background: var(--tag-bg); color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
+  .tag:hover { background: var(--accent-light); color: var(--accent); }
+
+  /* ATTACHMENTS */
+  .faq-attachments { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .attachments-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .attachments-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .attachment-img { max-width: 100%; width: auto; max-height: 280px; height: auto; object-fit: contain; border-radius: 6px; border: 1px solid var(--border); cursor: zoom-in; transition: box-shadow 0.15s; display: block; }
+  .attachment-img:hover { box-shadow: var(--shadow-md); }
+  .attachment-file { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); text-decoration: none; color: var(--text-primary); font-size: 0.82rem; transition: all 0.15s; }
+  .attachment-file:hover { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 64px 32px; color: var(--text-secondary); }
+  .empty-state .ei { font-size: 48px; margin-bottom: 16px; opacity: 0.45; }
+  .empty-state h3 { font-family: var(--font-body); font-size: 1.35rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+
+  /* LIGHTBOX */
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.88); display: flex; align-items: center; justify-content: center; z-index: 9999; cursor: zoom-out; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .lightbox.visible { opacity: 1; pointer-events: auto; }
+  .lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .lightbox-close { position: absolute; top: 20px; right: 24px; color: white; font-size: 28px; cursor: pointer; background: none; border: none; }
+
+  /* LOADER */
+  .loader { display: flex; justify-content: center; padding: 60px; }
+  .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .highlight { background: #FEF9C3; border-radius: 2px; }
+
+  /* SUGGEST BOX */
+  .suggest-box {
+    margin: 16px; padding: 14px; background: var(--accent-light);
+    border: 1px solid var(--accent-mid); border-radius: var(--radius);
+  }
+  .suggest-box p { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px; line-height: 1.5; }
+  .suggest-box strong { color: var(--text-primary); display: block; margin-bottom: 4px; font-size: 0.85rem; }
+  .suggest-btn {
+    width: 100%; padding: 9px 12px; border: none; border-radius: var(--radius-sm);
+    background: var(--accent); color: white; font-family: var(--font-body);
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s;
+  }
+  .suggest-btn:hover { background: var(--accent-hover); }
+  .suggest-mobile { display: none; margin-bottom: 20px; }
+
+  /* SUGGEST MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: flex;
+    align-items: center; justify-content: center; z-index: 9998; padding: 20px;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+  .modal-card {
+    background: var(--surface); border-radius: 14px; width: 100%; max-width: 440px;
+    box-shadow: var(--shadow-md); border: 1px solid var(--border);
+    transform: translateY(8px); transition: transform 0.2s;
+  }
+  .modal-overlay.visible .modal-card { transform: translateY(0); }
+  .modal-card-header { padding: 20px 22px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .modal-card-title { font-size: 1.1rem; font-weight: 600; }
+  .modal-card-sub { font-size: 0.82rem; color: var(--text-secondary); margin-top: 4px; }
+  .modal-close-btn { background: none; border: none; font-size: 20px; color: var(--text-secondary); cursor: pointer; padding: 4px; }
+  .modal-card-body { padding: 18px 22px 22px; }
+  .field-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .field-input {
+    width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-family: var(--font-body); font-size: 0.9rem; outline: none; margin-bottom: 12px;
+  }
+  .field-input:focus { border-color: var(--accent); }
+  textarea.field-input { resize: vertical; min-height: 88px; }
+  .field-hint { font-size: 0.75rem; color: var(--text-secondary); margin: -6px 0 12px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .submit-btn {
+    width: 100%; padding: 11px; border: none; border-radius: var(--radius-sm);
+    background: var(--accent); color: white; font-weight: 600; font-family: var(--font-body);
+    font-size: 0.9rem; cursor: pointer;
+  }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .form-msg { font-size: 0.85rem; margin-top: 10px; text-align: center; display: none; }
+  .form-msg.ok { color: #166534; display: block; }
+  .form-msg.err { color: #b91c1c; display: block; }
+
+  /* PAGINATION */
+  .pagination-bar { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .pagination-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: 100%; }
+  .pagination-toolbar label { font-size: 0.82rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px; }
+  .pagination-toolbar select {
+    padding: 6px 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    font-family: var(--font-body); font-size: 0.82rem; background: var(--surface); outline: none;
+  }
+  .pagination-info { font-size: 0.8rem; color: var(--text-secondary); }
+  .pagination-pages { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+  .page-btn {
+    min-width: 36px; height: 36px; padding: 0 10px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text-secondary); font-family: var(--font-body); font-size: 0.82rem;
+    font-weight: 500; cursor: pointer; transition: all 0.15s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-btn.nav-btn { font-size: 1rem; padding: 0 12px; }
+
+  @media (max-width: 768px) {
+    .suggest-mobile { display: block; }
+    .sidebar { display: none; }
+    .main-content { padding: 20px 16px; }
+    .site-header { padding: 0 16px; }
+    .pagination-toolbar { flex-direction: column; align-items: flex-start; }
+    .section-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  }
+
+  @media (min-width: 1400px) {
+    .main-content { padding: 32px 48px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="logo">
+    <img id="logoImg" class="logo-full" src="" alt="LogiHub">
+  </div>
+  <div class="header-search">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Buscar preguntas, etiquetas, categorías…" oninput="onSearchInput()">
+  </div>
+</header>
+
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="main-content">
+    <div class="suggest-box suggest-mobile">
+      <strong>¿No encontraste lo que buscabas?</strong>
+      <p>Cuéntanos qué pregunta crees que deberíamos agregar.</p>
+      <button class="suggest-btn" onclick="openSuggestModal()">💡 Sugerir una pregunta</button>
+    </div>
+    <div class="section-header">
+      <h1 class="section-title" id="sectionTitle">Todas las preguntas</h1>
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <label style="font-size:0.8rem;color:var(--text-secondary);display:flex;align-items:center;gap:6px">
+          Mostrar
+          <select id="pageSizeSelect" onchange="changePageSize(this.value)" style="padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:0.8rem;background:var(--surface)">
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="75">75</option>
+            <option value="100">100</option>
+          </select>
+          por página
+        </label>
+        <span class="results-count" id="resultsCount"></span>
+      </div>
+    </div>
+    <div id="faqList"><div class="loader"><div class="spinner"></div></div></div>
+    <div id="paginationBar" class="pagination-bar"></div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="suggestModal" onclick="if(event.target===this)closeSuggestModal()">
+  <div class="modal-card">
+    <div class="modal-card-header">
+      <div>
+        <div class="modal-card-title">Sugerir una pregunta</div>
+        <div class="modal-card-sub">¿Qué pregunta crees que nos hace falta?</div>
+      </div>
+      <button class="modal-close-btn" onclick="closeSuggestModal()">✕</button>
+    </div>
+    <div class="modal-card-body">
+      <label class="field-label">Tu sugerencia *</label>
+      <textarea class="field-input" id="suggestText" placeholder="Ej: ¿Cómo cambio mi contraseña?" maxlength="500"></textarea>
+      <div class="field-hint">Mínimo 10 caracteres</div>
+      <div class="field-row">
+        <div>
+          <label class="field-label">Tu nombre <span style="font-weight:400">(opcional)</span></label>
+          <input type="text" class="field-input" id="suggestName" placeholder="María" maxlength="100">
+        </div>
+        <div>
+          <label class="field-label">Email <span style="font-weight:400">(opcional)</span></label>
+          <input type="email" class="field-input" id="suggestEmail" placeholder="tu@email.com" maxlength="255">
+        </div>
+      </div>
+      <button class="submit-btn" id="suggestSubmitBtn" onclick="submitSuggestion()">Enviar sugerencia</button>
+      <div class="form-msg" id="suggestMsg"></div>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close">✕</button>
+  <img id="lightboxImg" src="" alt="">
+</div>
+
+<script>
+/* faq-api-prefix v7 — tema LogiHub */
+const BASE = '/faqs-logihub';
+function apiUrl(path) {
+  const base = location.pathname.startsWith(BASE) ? BASE : '';
+  return base + path;
+}
+
+function loadFaqContentScript() {
+  if (window.FaqContent) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = apiUrl('/faq-content.js');
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('faq-content.js'));
+    document.head.appendChild(s);
+  });
+}
+(function initFavicon() {
+  const el = document.getElementById('faviconLink');
+  if (el) el.href = apiUrl('/favicon.ico');
+  const logo = document.getElementById('logoImg');
+  if (logo && !logo.getAttribute('src')) logo.src = apiUrl('/logo-logihub.svg');
+})();
+
+const CAT_ICONS = { 'General':'📋','Pagos':'💳','Envíos':'📦','Devoluciones':'↩️','Cuenta':'👤','Soporte':'🛠️','Productos':'🛍️','Seguridad':'🔐','default':'📄' };
+
+const FONT_URLS = {
+  'satoshi': 'https://fonts.cdnfonts.com/css/satoshi',
+  'dm-sans': 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap',
+  'plus-jakarta': 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap',
+  'outfit': 'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap',
+  'sora': 'https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap',
+  'manrope': 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap'
+};
+
+const FONT_FAMILIES = {
+  'satoshi': "'Satoshi', ui-sans-serif, system-ui, sans-serif",
+  'dm-sans': "'DM Sans', sans-serif",
+  'plus-jakarta': "'Plus Jakarta Sans', sans-serif",
+  'outfit': "'Outfit', sans-serif",
+  'sora': "'Sora', sans-serif",
+  'manrope': "'Manrope', sans-serif"
+};
+
+let faqs = [];
+let activeCategory = 'all';
+let currentPage = 1;
+let pageSize = 25;
+let totalPages = 1;
+let totalCount = 0;
+let categoryCounts = [];
+let categoryTree = [];
+let expandedGroups = new Set();
+let searchQuery = '';
+let pendingOpenId = null;
+let searchDebounce = null;
+let faqsLoading = false;
+
+async function loadSiteConfig() {
+  try {
+    const r = await fetch(apiUrl('/api/site-config'));
+    const cfg = await r.json();
+    applySiteConfig(cfg);
+  } catch(e) { /* defaults en HTML */ }
+}
+
+function applySiteConfig(cfg) {
+  const name = cfg.brandName || 'Centro de Ayuda LogiHub';
+  document.title = name;
+
+  const fontKey = cfg.fontFamily || 'satoshi';
+  document.getElementById('fontLink').href = FONT_URLS[fontKey] || FONT_URLS['satoshi'];
+  document.documentElement.style.setProperty('--font-body', FONT_FAMILIES[fontKey] || FONT_FAMILIES['satoshi']);
+
+  const img = document.getElementById('logoImg');
+  img.src = cfg.logoUrl || apiUrl('/logo-logihub.svg');
+  img.alt = cfg.logoUrl ? name : 'LogiHub';
+}
+
+async function fetchFAQs(page = currentPage) {
+  if (faqsLoading) return;
+  faqsLoading = true;
+  const list = document.getElementById('faqList');
+  list.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+  const params = new URLSearchParams({ page, limit: pageSize, category: activeCategory });
+  const q = document.getElementById('searchInput').value.trim();
+  if (q) params.set('q', q);
+  if (pendingOpenId) {
+    params.set('openId', pendingOpenId);
+    pendingOpenId = null;
+  }
+
+  try {
+    const r = await fetch(apiUrl(`/api/faqs?${params}`));
+    if (!r.ok) throw new Error(`API ${r.status}`);
+    const data = await r.json();
+    faqs = data.faqs || [];
+    const meta = data.meta || {};
+    currentPage = meta.page || page;
+    pageSize = meta.limit || pageSize;
+    totalPages = meta.totalPages || 1;
+    totalCount = meta.total || 0;
+    categoryCounts = meta.categories || [];
+    categoryTree = meta.categoryTree || [];
+    searchQuery = q;
+  } catch(e) {
+    faqs = [];
+    totalCount = 0;
+    totalPages = 1;
+    document.getElementById('faqList').innerHTML =
+      `<div class="empty-state"><div class="ei">⚠️</div><h3>No se pudieron cargar las preguntas</h3>` +
+      `<p>URL API: <code>${esc(apiUrl('/api/faqs'))}</code><br>${esc(e.message)}</p></div>`;
+    faqsLoading = false;
+    return faqs;
+  }
+
+  faqsLoading = false;
+  const sel = document.getElementById('pageSizeSelect');
+  if (sel) sel.value = String(pageSize);
+  renderSidebar();
+  renderFAQList();
+  renderPagination();
+  return faqs;
+}
+
+async function loadFAQs() {
+  const id = parseInt(new URLSearchParams(window.location.search).get('p'), 10);
+  if (id) {
+    pendingOpenId = id;
+    activeCategory = 'all';
+    document.getElementById('searchInput').value = '';
+  }
+  await fetchFAQs(1);
+  if (id && faqs.find(f => f.id === id)) {
+    requestAnimationFrame(() => openCard(id, true));
+  }
+}
+
+function onSearchInput() {
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => fetchFAQs(1), 320);
+}
+
+function changePageSize(size) {
+  pageSize = parseInt(size, 10) || 25;
+  fetchFAQs(1);
+}
+
+function goToPage(page) {
+  if (page < 1 || page > totalPages || page === currentPage) return;
+  fetchFAQs(page).then(() => {
+    document.getElementById('faqList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  return new Date(ts).toLocaleString('es-MX', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+}
+
+function toggleGroupExpand(groupId, ev) {
+  ev.stopPropagation();
+  if (expandedGroups.has(groupId)) expandedGroups.delete(groupId);
+  else expandedGroups.add(groupId);
+  renderSidebar();
+}
+
+function expandGroupForCategory(cat) {
+  if (cat.startsWith('group:')) {
+    const gid = parseInt(cat.slice(6), 10);
+    if (gid) expandedGroups.add(gid);
+  } else if (cat.startsWith('id:')) {
+    const id = parseInt(cat.slice(3), 10);
+    for (const g of categoryTree) {
+      if ((g.children || []).some(c => c.id === id)) {
+        expandedGroups.add(g.id);
+        break;
+      }
+    }
+  }
+}
+
+function renderSidebar() {
+  const totalAll = categoryTree.reduce((s, g) => s + g.count, 0)
+    || categoryCounts.reduce((s, c) => s + c.count, 0);
+  let html = `<div class="sidebar-section" style="margin-top:4px">Categorías</div>`;
+  html += `<div class="sidebar-item ${activeCategory==='all'?'active':''}" onclick="setCategory('all')"><span>📚</span> Todas <span class="count">${totalAll}</span></div>`;
+
+  if (categoryTree.length) {
+    categoryTree.forEach(group => {
+      const groupKey = `group:${group.id}`;
+      const groupActive = activeCategory === groupKey;
+      const expanded = expandedGroups.has(group.id);
+      html += `<div class="sidebar-group ${expanded ? 'open' : ''}">`;
+      html += `<div class="sidebar-item sidebar-group-title ${groupActive ? 'active' : ''}">`;
+      html += `<button type="button" class="sidebar-chevron" onclick="toggleGroupExpand(${group.id}, event)" title="${expanded ? 'Colapsar' : 'Expandir'}" aria-expanded="${expanded}">▸</button>`;
+      html += `<span class="sidebar-group-label" onclick="setCategory('${groupKey}')">${group.icon ? `<span>${group.icon}</span> ` : ''}${esc(group.name)}</span>`;
+      html += `<span class="count">${group.count}</span></div>`;
+      html += `<div class="sidebar-children">`;
+      (group.children || []).forEach(child => {
+        const childKey = `id:${child.id}`;
+        const icon = child.icon || CAT_ICONS[child.name] || CAT_ICONS['default'];
+        html += `<div class="sidebar-item sidebar-subitem ${activeCategory===childKey?'active':''}" onclick="setCategory('${childKey}')">`;
+        html += `<span>${icon}</span> ${esc(child.name)} <span class="count">${child.count}</span></div>`;
+      });
+      html += `</div></div>`;
+    });
+  } else {
+    categoryCounts.forEach(({ category: cat, count }) => {
+      const icon = CAT_ICONS[cat] || CAT_ICONS['default'];
+      html += `<div class="sidebar-item ${activeCategory===cat?'active':''}" onclick="setCategory('${esc(cat)}')"><span>${icon}</span> ${esc(cat)} <span class="count">${count}</span></div>`;
+    });
+  }
+
+  html += `<div class="suggest-box">
+    <strong>¿No encontraste lo que buscabas?</strong>
+    <p>¿Qué pregunta crees que nos hace falta?</p>
+    <button class="suggest-btn" onclick="openSuggestModal()">💡 Sugerir pregunta</button>
+  </div>`;
+  document.getElementById('sidebar').innerHTML = html;
+}
+
+function openSuggestModal() {
+  document.getElementById('suggestMsg').className = 'form-msg';
+  document.getElementById('suggestMsg').textContent = '';
+  document.getElementById('suggestModal').classList.add('visible');
+  setTimeout(() => document.getElementById('suggestText').focus(), 100);
+}
+
+function closeSuggestModal() {
+  document.getElementById('suggestModal').classList.remove('visible');
+}
+
+async function submitSuggestion() {
+  const suggestion = document.getElementById('suggestText').value.trim();
+  const name = document.getElementById('suggestName').value.trim();
+  const email = document.getElementById('suggestEmail').value.trim();
+  const msg = document.getElementById('suggestMsg');
+  const btn = document.getElementById('suggestSubmitBtn');
+
+  if (suggestion.length < 10) {
+    msg.className = 'form-msg err';
+    msg.textContent = 'Escribe al menos 10 caracteres.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Enviando…';
+  try {
+    const r = await fetch(apiUrl('/api/suggestions'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suggestion, name, email })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Error al enviar');
+    msg.className = 'form-msg ok';
+    msg.textContent = data.message || '¡Gracias! Recibimos tu sugerencia.';
+    document.getElementById('suggestText').value = '';
+    document.getElementById('suggestName').value = '';
+    document.getElementById('suggestEmail').value = '';
+    setTimeout(closeSuggestModal, 2000);
+  } catch(e) {
+    msg.className = 'form-msg err';
+    msg.textContent = e.message || 'No se pudo enviar. Intenta de nuevo.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Enviar sugerencia';
+}
+
+function categoryLabel(cat) {
+  if (cat === 'all') return 'Todas las preguntas';
+  if (cat.startsWith('group:')) {
+    const g = categoryTree.find(x => x.id === parseInt(cat.slice(6), 10));
+    return g ? g.name : 'Categoría';
+  }
+  if (cat.startsWith('id:')) {
+    const id = parseInt(cat.slice(3), 10);
+    for (const g of categoryTree) {
+      const c = (g.children || []).find(x => x.id === id);
+      if (c) return `${g.name} › ${c.name}`;
+    }
+  }
+  return cat;
+}
+
+function setCategory(cat) {
+  activeCategory = cat;
+  expandGroupForCategory(cat);
+  document.getElementById('searchInput').value = '';
+  fetchFAQs(1);
+}
+
+function renderFAQList() {
+  const query = searchQuery.toLowerCase();
+  document.getElementById('sectionTitle').textContent = categoryLabel(activeCategory);
+
+  const from = totalCount ? (currentPage - 1) * pageSize + 1 : 0;
+  const to = totalCount ? from + faqs.length - 1 : 0;
+  const rangeStr = totalCount ? `${from}–${to} de ${totalCount}` : '0 preguntas';
+  document.getElementById('resultsCount').textContent = rangeStr;
+
+  const list = document.getElementById('faqList');
+  if (!faqs.length) {
+    list.innerHTML = `<div class="empty-state"><div class="ei">🔍</div><h3>${query?'Sin resultados':'Sin preguntas aún'}</h3><p>${query?`No encontramos resultados para "<strong>${esc(query)}</strong>"`:'Pronto habrá contenido aquí.'}</p></div>`;
+    return;
+  }
+  list.innerHTML = faqs.map(f => renderCard(f, query)).join('');
+}
+
+function renderPagination() {
+  const el = document.getElementById('paginationBar');
+  if (!totalCount) { el.innerHTML = ''; return; }
+
+  const windowSize = 10;
+  const windowStart = Math.floor((currentPage - 1) / windowSize) * windowSize + 1;
+  const windowEnd = Math.min(windowStart + windowSize - 1, totalPages);
+
+  let html = `<div class="pagination-info">Página ${currentPage} de ${totalPages}</div>`;
+  html += `<div class="pagination-pages">`;
+  if (windowStart > 1) html += `<button class="page-btn nav-btn" onclick="goToPage(${windowStart - 1})" title="Bloque anterior">«</button>`;
+  if (currentPage > 1) html += `<button class="page-btn nav-btn" onclick="goToPage(${currentPage - 1})" title="Anterior">‹</button>`;
+  for (let p = windowStart; p <= windowEnd; p++) {
+    html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p}</button>`;
+  }
+  if (currentPage < totalPages) html += `<button class="page-btn nav-btn" onclick="goToPage(${currentPage + 1})" title="Siguiente">›</button>`;
+  if (windowEnd < totalPages) html += `<button class="page-btn nav-btn" onclick="goToPage(${windowEnd + 1})" title="Bloque siguiente">»</button>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function renderCard(f, hl='') {
+  const tags = (f.tags||[]).map(t => `<span class="tag" onclick="filterByTag('${esc(t)}')">${hlText(esc(t), hl)}</span>`).join('');
+  const images = (f.attachments||[]).filter(a => a.type && a.type.startsWith('image/'));
+  const docs   = (f.attachments||[]).filter(a => !a.type || !a.type.startsWith('image/'));
+
+  const imagesHtml = images.map(a =>
+    `<img class="attachment-img" src="${a.url}" alt="${esc(a.originalName||a.name||'')}" title="${esc(a.originalName||a.name||'')}" onclick="openLightbox('${a.url}')">`
+  ).join('');
+
+  const docsHtml = docs.map(a =>
+    `<a class="attachment-file" href="${a.url}" download="${esc(a.originalName||a.name||'')}"><span>${fileIcon(a.type)}</span>${esc(a.originalName||a.name||'Archivo')}</a>`
+  ).join('');
+
+  const hasAtt = images.length || docs.length;
+  const attHtml = hasAtt ? `<div class="faq-attachments"><div class="attachments-label">Archivos adjuntos</div><div class="attachments-grid">${imagesHtml}${docsHtml}</div></div>` : '';
+  const updatedTs = f.updatedAt || f.createdAt;
+  const updatedHtml = updatedTs
+    ? `<div class="faq-updated">🕐 Información actualizada al <strong>${formatDate(updatedTs)}</strong></div>`
+    : '';
+
+  return `<div class="faq-card" id="card-${f.id}">
+    <div class="faq-question" onclick="toggleCard(${f.id})">
+      <span class="faq-question-text">${hlText(esc(f.question), hl)}</span>
+      <button class="faq-share" title="Compartir enlace a esta pregunta" onclick="shareFAQ(event, ${f.id})">🔗</button>
+      <span class="faq-chevron">▾</span>
+    </div>
+    <div class="faq-answer">
+      <div class="faq-answer-inner">
+        <div class="faq-answer-body">${highlightFaqHtml(formatFaqContent(f.answer), hl)}</div>
+        ${tags ? `<div class="faq-tags">${tags}</div>` : ''}
+        ${attHtml}
+        ${updatedHtml}
+      </div>
+    </div>
+  </div>`;
+}
+
+function getShareUrl(id) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('p', id);
+  url.hash = '';
+  return url.toString();
+}
+
+function showShareToast(msg) {
+  let t = document.getElementById('shareToast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'shareToast';
+    t.className = 'share-toast';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('visible');
+  clearTimeout(showShareToast._timer);
+  showShareToast._timer = setTimeout(() => t.classList.remove('visible'), 2400);
+}
+
+function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+  }
+  return copyTextFallback(text);
+}
+
+function copyTextFallback(text) {
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    try {
+      document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+    } catch (err) {
+      reject(err);
+    } finally {
+      document.body.removeChild(ta);
+    }
+  });
+}
+
+function shareFAQ(e, id) {
+  e.stopPropagation();
+  const url = getShareUrl(id);
+  copyTextToClipboard(url).finally(() => showShareToast('Copiado para compartir'));
+}
+
+function openCard(id, scroll = false) {
+  const card = document.getElementById(`card-${id}`);
+  if (!card) return;
+  document.querySelectorAll('.faq-card.open').forEach(c => c.classList.remove('open'));
+  card.classList.add('open');
+  card.classList.add('shared-highlight');
+  setTimeout(() => card.classList.remove('shared-highlight'), 2000);
+  if (scroll) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function toggleCard(id) {
+  const card = document.getElementById(`card-${id}`);
+  const was = card.classList.contains('open');
+  document.querySelectorAll('.faq-card.open').forEach(c => c.classList.remove('open'));
+  if (!was) {
+    card.classList.add('open');
+    history.replaceState(null, '', getShareUrl(id));
+  } else {
+    history.replaceState(null, '', window.location.pathname);
+  }
+}
+
+function filterByTag(tag) {
+  document.getElementById('searchInput').value = tag;
+  fetchFAQs(1);
+}
+
+function openLightbox(src) {
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('visible');
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('visible');
+}
+
+function fileIcon(type) {
+  if (!type) return '📎';
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('word')||type.includes('doc')) return '📝';
+  if (type.includes('excel')||type.includes('sheet')||type.includes('xls')) return '📊';
+  return '📎';
+}
+
+function hlText(html, q) {
+  return highlightFaqHtml(html, q);
+}
+
+function formatFaqContent(text) {
+  return FaqContent.formatFaqContent(text);
+}
+
+function highlightFaqHtml(html, q) {
+  return FaqContent.highlightFaqHtml(html, q);
+}
+
+function esc(s) {
+  return FaqContent.esc(s);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeLightbox(); closeSuggestModal(); }
+});
+
+loadFaqContentScript().then(() => {
+  loadSiteConfig();
+  loadFAQs();
+}).catch(() => {
+  window.FaqContent = {
+    esc: (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
+    formatFaqContent: (t) => `<p>${String(t ?? '')}</p>`,
+    highlightFaqHtml: (h, q) => h
+  };
+  loadSiteConfig();
+  loadFAQs();
+});
+</script>
+</body>
+</html>

@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "build:win": "node scripts/build-windows.js"
+    "build:public": "vite build --config frontend-public/vite.config.js",
+    "build:win": "npm run build:public && node scripts/build-windows.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -20,6 +21,7 @@
   "pkg": {
     "assets": [
       "public/index.html",
+      "public/assets/**/*",
       "public/faq-content.js",
       "public/favicon.ico",
       "public/logo-logihub.svg",
@@ -37,6 +39,9 @@
     "outputPath": "dist"
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "^6.6.0"
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@yao-pkg/pkg": "^6.6.0",
+    "vite": "^6.0.3",
+    "vue": "^3.5.13"
   }
 }
