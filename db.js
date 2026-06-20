@@ -120,25 +120,74 @@ function sqlNow() {
   return new Date();
 }
 
-async function migrateFaqTimestampsToDatetime(conn) {
-  const [cols] = await conn.query("SHOW COLUMNS FROM faqs WHERE Field = 'created_at'");
-  if (!cols.length || !String(cols[0].Type).toLowerCase().includes('bigint')) return;
+/** Tablas y columnas que deben guardar fechas como DATETIME (2026-06-09 05:47:41) */
+const TIMESTAMP_MIGRATIONS = [
+  {
+    table: 'faqs',
+    fields: [
+      { name: 'created_at', required: true },
+      { name: 'updated_at', required: false },
+      { name: 'deleted_at', required: false }
+    ]
+  },
+  {
+    table: 'faq_categories',
+    fields: [{ name: 'created_at', required: true }]
+  },
+  {
+    table: 'site_settings',
+    fields: [{ name: 'updated_at', required: false }]
+  },
+  {
+    table: 'question_suggestions',
+    fields: [
+      { name: 'created_at', required: true },
+      { name: 'reviewed_at', required: false }
+    ]
+  },
+  {
+    table: 'users',
+    fields: [
+      { name: 'created_at', required: true },
+      { name: 'updated_at', required: false },
+      { name: 'last_login_at', required: false }
+    ]
+  }
+];
 
-  console.log('[db] Migrando timestamps de faqs a DATETIME legible...');
+async function migrateColumnToDatetime(conn, table, field, required) {
+  const [cols] = await conn.query(
+    `SHOW COLUMNS FROM \`${table}\` WHERE Field = ?`,
+    [field]
+  );
+  if (!cols.length) return;
+  const type = String(cols[0].Type).toLowerCase();
+  if (!type.includes('bigint')) return;
 
-  for (const field of ['created_at', 'updated_at', 'deleted_at']) {
-    const tmp = `${field}_dt`;
-    await conn.query(`ALTER TABLE faqs ADD COLUMN ${tmp} DATETIME(0) NULL`);
-    if (field === 'created_at') {
-      await conn.query(`UPDATE faqs SET ${tmp} = FROM_UNIXTIME(${field} / 1000)`);
-    } else {
-      await conn.query(
-        `UPDATE faqs SET ${tmp} = IF(${field} IS NOT NULL, FROM_UNIXTIME(${field} / 1000), NULL)`
-      );
+  console.log(`[db] Migrando ${table}.${field} BIGINT → DATETIME...`);
+  const tmp = `${field}_dt`;
+  await conn.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${tmp}\` DATETIME(0) NULL`);
+  if (required) {
+    await conn.query(
+      `UPDATE \`${table}\` SET \`${tmp}\` = FROM_UNIXTIME(\`${field}\` / 1000)`
+    );
+  } else {
+    await conn.query(
+      `UPDATE \`${table}\` SET \`${tmp}\` = IF(\`${field}\` IS NOT NULL, FROM_UNIXTIME(\`${field}\` / 1000), NULL)`
+    );
+  }
+  await conn.query(`ALTER TABLE \`${table}\` DROP COLUMN \`${field}\``);
+  const notNull = required ? 'NOT NULL' : 'NULL DEFAULT NULL';
+  await conn.query(
+    `ALTER TABLE \`${table}\` CHANGE \`${tmp}\` \`${field}\` DATETIME(0) ${notNull}`
+  );
+}
+
+async function migrateAllTimestampsToDatetime(conn) {
+  for (const { table, fields } of TIMESTAMP_MIGRATIONS) {
+    for (const { name, required } of fields) {
+      await migrateColumnToDatetime(conn, table, name, required);
     }
-    await conn.query(`ALTER TABLE faqs DROP COLUMN ${field}`);
-    const notNull = field === 'created_at' ? 'NOT NULL' : 'NULL DEFAULT NULL';
-    await conn.query(`ALTER TABLE faqs CHANGE ${tmp} ${field} DATETIME(0) ${notNull}`);
   }
 }
 
@@ -186,7 +235,7 @@ async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     try {
-      await conn.query('ALTER TABLE faqs ADD COLUMN deleted_at BIGINT NULL');
+      await conn.query('ALTER TABLE faqs ADD COLUMN deleted_at DATETIME(0) NULL');
     } catch (e) {
       if (e.code !== 'ER_DUP_FIELDNAME') throw e;
     }
@@ -212,12 +261,11 @@ async function initDatabase() {
         name VARCHAR(100) NOT NULL,
         icon VARCHAR(20) NULL,
         sort_order INT NOT NULL DEFAULT 0,
-        created_at BIGINT NOT NULL,
+        created_at DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         INDEX idx_cat_parent (parent_id),
         INDEX idx_cat_sort (sort_order)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
-    await migrateFaqTimestampsToDatetime(conn);
     await migrateCategoriesFromLegacy(conn);
     await conn.query(`
       CREATE TABLE IF NOT EXISTS site_settings (
@@ -225,7 +273,7 @@ async function initDatabase() {
         brand_name VARCHAR(120) NOT NULL DEFAULT 'Centro de Ayuda',
         logo_url VARCHAR(500) NULL,
         font_family VARCHAR(50) NOT NULL DEFAULT 'satoshi',
-        updated_at BIGINT NULL
+        updated_at DATETIME(0) NULL DEFAULT NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     await conn.query(`
@@ -235,8 +283,8 @@ async function initDatabase() {
         name VARCHAR(100) NULL,
         email VARCHAR(255) NULL,
         status ENUM('pending', 'reviewed') NOT NULL DEFAULT 'pending',
-        created_at BIGINT NOT NULL,
-        reviewed_at BIGINT NULL,
+        created_at DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        reviewed_at DATETIME(0) NULL DEFAULT NULL,
         INDEX idx_suggestion_status (status),
         INDEX idx_suggestion_created (created_at)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -249,13 +297,14 @@ async function initDatabase() {
         name VARCHAR(100) NOT NULL DEFAULT 'Administrador',
         role ENUM('admin', 'editor') NOT NULL DEFAULT 'admin',
         is_active TINYINT(1) NOT NULL DEFAULT 1,
-        created_at BIGINT NOT NULL,
-        updated_at BIGINT NULL,
-        last_login_at BIGINT NULL,
+        created_at DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME(0) NULL DEFAULT NULL,
+        last_login_at DATETIME(0) NULL DEFAULT NULL,
         UNIQUE KEY uq_users_email (email),
         INDEX idx_users_active (is_active)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    await migrateAllTimestampsToDatetime(conn);
   } finally {
     conn.release();
   }
@@ -270,9 +319,9 @@ function rowToUser(row, { includeDates = false } = {}) {
     isActive: !!row.is_active
   };
   if (includeDates) {
-    user.createdAt = Number(row.created_at);
-    user.updatedAt = row.updated_at ? Number(row.updated_at) : undefined;
-    user.lastLoginAt = row.last_login_at ? Number(row.last_login_at) : undefined;
+    user.createdAt = toTimestampMs(row.created_at);
+    user.updatedAt = toTimestampMs(row.updated_at);
+    user.lastLoginAt = toTimestampMs(row.last_login_at);
   }
   return user;
 }
@@ -295,7 +344,7 @@ async function verifyUserLogin(email, password) {
   if (!row) return null;
   const ok = await bcrypt.compare(password, row.password_hash);
   if (!ok) return null;
-  const now = Date.now();
+  const now = sqlNow();
   await pool.query('UPDATE users SET last_login_at = ? WHERE id = ?', [now, row.id]);
   return rowToUser({ ...row, last_login_at: now }, { includeDates: true });
 }
@@ -308,7 +357,7 @@ async function getAllUsers() {
 }
 
 async function createUser({ email, password, name, role }) {
-  const now = Date.now();
+  const now = sqlNow();
   const hash = await bcrypt.hash(password, 12);
   const [result] = await pool.query(
     `INSERT INTO users (email, password_hash, name, role, is_active, created_at)
@@ -382,7 +431,7 @@ async function migrateCategoriesFromLegacy(conn) {
   const db = conn || pool;
   const [catRows] = await db.query('SELECT COUNT(*) AS total FROM faq_categories');
   if (catRows[0].total === 0) {
-    const now = Date.now();
+    const now = sqlNow();
     await db.query(
       `INSERT INTO faq_categories (parent_id, name, icon, sort_order, created_at) VALUES
        (NULL, 'Operativo', '⚙️', 1, ?),
@@ -411,7 +460,7 @@ async function migrateCategoriesFromLegacy(conn) {
     if (existing.length) {
       leafId = existing[0].id;
     } else if (operativoId) {
-      const now = Date.now();
+      const now = sqlNow();
       const [ins] = await db.query(
         `INSERT INTO faq_categories (parent_id, name, icon, sort_order, created_at) VALUES (?, ?, NULL, 999, ?)`,
         [operativoId, name, now]
@@ -456,7 +505,7 @@ function rowToCategory(row) {
     name: row.name,
     icon: row.icon || null,
     sortOrder: Number(row.sort_order) || 0,
-    createdAt: Number(row.created_at)
+    createdAt: toTimestampMs(row.created_at)
   };
 }
 
@@ -475,7 +524,7 @@ async function getCategoryById(id) {
 async function createCategory({ name, parentId, icon, sortOrder }) {
   const trimmed = (name || '').trim();
   if (!trimmed) throw new Error('Nombre obligatorio');
-  const now = Date.now();
+  const now = sqlNow();
   const [result] = await pool.query(
     `INSERT INTO faq_categories (parent_id, name, icon, sort_order, created_at)
      VALUES (?, ?, ?, ?, ?)`,
@@ -907,26 +956,26 @@ function rowToSiteSettings(row) {
     brandName: row.brand_name,
     logoUrl: row.logo_url || null,
     fontFamily: row.font_family || DEFAULT_SITE.fontFamily,
-    updatedAt: row.updated_at ? Number(row.updated_at) : undefined
+    updatedAt: toTimestampMs(row.updated_at)
   };
 }
 
 async function getSiteSettings() {
   const [rows] = await pool.query('SELECT * FROM site_settings WHERE id = 1');
   if (!rows.length) {
-    const now = Date.now();
+    const now = sqlNow();
     await pool.query(
       `INSERT INTO site_settings (id, brand_name, logo_url, font_family, updated_at)
        VALUES (1, ?, NULL, ?, ?)`,
       [DEFAULT_SITE.brandName, DEFAULT_SITE.fontFamily, now]
     );
-    return { ...DEFAULT_SITE, updatedAt: now };
+    return { ...DEFAULT_SITE, updatedAt: toTimestampMs(now) };
   }
   return rowToSiteSettings(rows[0]);
 }
 
 async function updateSiteSettings({ brandName, logoUrl, fontFamily }) {
-  const now = Date.now();
+  const now = sqlNow();
   await pool.query(
     `INSERT INTO site_settings (id, brand_name, logo_url, font_family, updated_at)
      VALUES (1, ?, ?, ?, ?)
@@ -952,13 +1001,13 @@ function rowToSuggestion(row) {
     name: row.name || null,
     email: row.email || null,
     status: row.status,
-    createdAt: Number(row.created_at),
-    reviewedAt: row.reviewed_at ? Number(row.reviewed_at) : undefined
+    createdAt: toTimestampMs(row.created_at),
+    reviewedAt: toTimestampMs(row.reviewed_at)
   };
 }
 
 async function createSuggestion({ suggestion, name, email }) {
-  const now = Date.now();
+  const now = sqlNow();
   const [result] = await pool.query(
     `INSERT INTO question_suggestions (suggestion, name, email, status, created_at)
      VALUES (?, ?, ?, 'pending', ?)`,
@@ -983,7 +1032,7 @@ async function countPendingSuggestions() {
 }
 
 async function markSuggestionReviewed(id) {
-  const now = Date.now();
+  const now = sqlNow();
   const [result] = await pool.query(
     "UPDATE question_suggestions SET status = 'reviewed', reviewed_at = ? WHERE id = ?",
     [now, id]
