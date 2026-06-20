@@ -115,13 +115,14 @@
     50% { box-shadow: 0 0 0 6px rgba(5,120,237,0.2); }
   }
   .share-toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--text-primary); color: white; padding: 11px 20px;
-    border-radius: var(--radius-sm); font-size: 0.85rem; z-index: 10000;
-    opacity: 0; pointer-events: none; transition: opacity 0.25s;
-    box-shadow: var(--shadow-md); max-width: 90vw; text-align: center;
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(8px);
+    background: rgba(20, 24, 32, 0.92); color: #fff; padding: 12px 22px;
+    border-radius: 10px; font-size: 0.875rem; font-weight: 500; z-index: 10000;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18); max-width: 90vw; text-align: center;
+    backdrop-filter: blur(8px); letter-spacing: 0.01em;
   }
-  .share-toast.visible { opacity: 1; }
+  .share-toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
   .faq-card.open .faq-chevron { transform: rotate(180deg); background: var(--accent-light); color: var(--accent); }
 
   .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
@@ -714,23 +715,47 @@ function showShareToast(msg) {
     t = document.createElement('div');
     t.id = 'shareToast';
     t.className = 'share-toast';
+    t.setAttribute('role', 'status');
+    t.setAttribute('aria-live', 'polite');
     document.body.appendChild(t);
   }
   t.textContent = msg;
   t.classList.add('visible');
   clearTimeout(showShareToast._timer);
-  showShareToast._timer = setTimeout(() => t.classList.remove('visible'), 2800);
+  showShareToast._timer = setTimeout(() => t.classList.remove('visible'), 2400);
 }
 
-async function shareFAQ(e, id) {
+function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    return navigator.clipboard.writeText(text).catch(() => copyTextFallback(text));
+  }
+  return copyTextFallback(text);
+}
+
+function copyTextFallback(text) {
+  return new Promise((resolve, reject) => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, text.length);
+    try {
+      document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+    } catch (err) {
+      reject(err);
+    } finally {
+      document.body.removeChild(ta);
+    }
+  });
+}
+
+function shareFAQ(e, id) {
   e.stopPropagation();
   const url = getShareUrl(id);
-  try {
-    await navigator.clipboard.writeText(url);
-    showShareToast('Copiado — listo para compartir');
-  } catch {
-    prompt('Copia este enlace:', url);
-  }
+  copyTextToClipboard(url).finally(() => showShareToast('Copiado para compartir'));
 }
 
 function openCard(id, scroll = false) {
