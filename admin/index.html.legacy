@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — FAQ</title>
+<link rel="icon" href="/faqs-logihub/favicon.ico" type="image/x-icon" id="faviconLink">
+<style>
+  @import url('https://fonts.cdnfonts.com/css/satoshi');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F9FAFB;
+    --surface: #FFFFFF;
+    --surface2: #F3F4F6;
+    --border: #E5E7EB;
+    --text: #111827;
+    --text-2: #6B7280;
+    --accent: #0578ED;
+    --accent-h: #045FBB;
+    --accent-light: #D9ECFE;
+    --accent-mid: #C0DFFE;
+    --success: #16A34A;
+    --danger: #DC2626;
+    --warning: #D97706;
+    --radius: 8px;
+    --radius-sm: 6px;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.08);
+  }
+
+  body { font-family: 'Satoshi', ui-sans-serif, system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ─ LOGIN ─ */
+  #loginScreen {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #D9ECFE 0%, var(--bg) 45%);
+  }
+  .login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 40px; width: 380px; box-shadow: var(--shadow-md); }
+  .login-logo { font-size: 2rem; margin-bottom: 6px; }
+  .login-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .login-sub { font-size: 0.85rem; color: var(--text-2); margin-bottom: 28px; }
+  .login-error { background: #FEF2F2; border: 1px solid #FECACA; color: var(--danger); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 0.85rem; margin-bottom: 14px; display: none; }
+
+  /* ─ APP ─ */
+  #app { display: none; }
+  .app-header { background: var(--surface); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+  .app-logo { font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 8px; }
+  .admin-badge { background: var(--accent-light); color: var(--accent); border-radius: 99px; padding: 3px 10px; font-size: 0.72rem; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .app-body { display: flex; min-height: calc(100vh - 56px); }
+  .sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 16px 0; }
+  .sidebar-label { padding: 0 14px 8px; font-size: 0.68rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.08em; }
+  .nav-item { display: flex; align-items: center; gap: 9px; padding: 9px 14px; font-size: 0.85rem; color: var(--text-2); cursor: pointer; border-left: 3px solid transparent; transition: all 0.15s; }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+  .nav-item .badge { margin-left: auto; background: var(--surface2); color: var(--text-2); font-size: 0.7rem; padding: 1px 7px; border-radius: 99px; }
+  .nav-item.active .badge { background: var(--accent-mid); color: var(--accent); }
+
+  .content { flex: 1; padding: 28px; overflow-y: auto; }
+
+  /* ─ BUTTONS ─ */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500; font-family: inherit; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.25); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-success { background: var(--success); color: white; }
+  .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+
+  /* ─ FORM ─ */
+  .form-group { margin-bottom: 16px; }
+  .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-control { width: 100%; padding: 9px 13px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 0.9rem; font-family: inherit; background: var(--surface); color: var(--text); outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(5,120,237,0.15); }
+  textarea.form-control { resize: vertical; min-height: 120px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-hint { font-size: 0.76rem; color: var(--text-2); margin-top: 5px; }
+  .answer-preview {
+    margin-top: 10px; padding: 12px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 0.88rem; line-height: 1.7; color: var(--text-2);
+  }
+  .answer-preview-label { font-size: 0.72rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .answer-preview strong { font-weight: 600; color: var(--text); }
+  .answer-preview em { font-style: italic; }
+  .answer-preview ul { margin: 8px 0; padding-left: 1.25rem; }
+  .answer-preview li { margin-bottom: 4px; }
+  .answer-preview p { margin: 0 0 10px; }
+  .answer-preview p:last-child { margin-bottom: 0; }
+
+  /* ─ PAGE HEADER ─ */
+  .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .page-title { font-size: 1.3rem; font-weight: 600; }
+  .page-sub { font-size: 0.85rem; color: var(--text-2); margin-top: 2px; }
+
+  /* ─ FAQ TABLE ─ */
+  .faq-row { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 14px; transition: border-color 0.15s; }
+  .faq-row:hover { border-color: #D1D5DB; box-shadow: var(--shadow-sm); }
+  .faq-row-info { flex: 1; min-width: 0; }
+  .faq-row-q { font-weight: 500; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+  .faq-row-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .cat-badge { font-size: 0.72rem; padding: 2px 9px; border-radius: 99px; background: var(--accent-light); color: var(--accent); font-weight: 500; }
+  .tag-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 99px; background: var(--surface2); color: var(--text-2); }
+  .att-badge { font-size: 0.72rem; color: var(--text-2); display: flex; align-items: center; gap: 3px; }
+  .date-badge { font-size: 0.72rem; color: var(--text-2); display: flex; align-items: center; gap: 3px; }
+  .annulled-badge { font-size: 0.72rem; padding: 2px 9px; border-radius: 99px; background: rgba(239,68,68,0.15); color: var(--danger); font-weight: 500; }
+  .faq-row.annulled { opacity: 0.65; border-style: dashed; }
+  .faq-row.annulled .faq-row-q { text-decoration: line-through; text-decoration-color: rgba(239,68,68,0.4); }
+  .faq-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  /* ─ PAGINATION ─ */
+  .pagination-bar { margin-top: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+  .pagination-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-bottom: 16px; }
+  .pagination-toolbar label { font-size: 0.82rem; color: var(--text-2); display: flex; align-items: center; gap: 8px; }
+  .pagination-toolbar select {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 0.82rem; background: var(--surface); color: var(--text); outline: none;
+  }
+  .pagination-info { font-size: 0.8rem; color: var(--text-2); }
+  .pagination-pages { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; }
+  .page-btn {
+    min-width: 34px; height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text-2); font-family: inherit; font-size: 0.82rem;
+    font-weight: 500; cursor: pointer; transition: all 0.15s;
+  }
+  .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+  .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-btn.nav-btn { font-size: 1rem; padding: 0 12px; }
+
+  /* ─ UPLOAD ZONE ─ */
+  .upload-zone { border: 2px dashed var(--border); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface2); }
+  .upload-zone:hover, .upload-zone.drag-over { border-color: var(--accent); background: var(--accent-light); }
+  .upload-zone .ui { font-size: 24px; margin-bottom: 6px; }
+  .upload-zone p { font-size: 0.83rem; color: var(--text-2); }
+  .upload-zone strong { color: var(--accent); }
+  .file-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .file-chip { display: flex; align-items: center; gap: 7px; padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); font-size: 0.8rem; color: var(--text-2); }
+  .file-chip img { width: 32px; height: 24px; object-fit: cover; border-radius: 3px; }
+  .file-chip .rm { background: none; border: none; cursor: pointer; color: var(--text-2); font-size: 15px; padding: 0; margin-left: 2px; }
+  .file-chip .rm:hover { color: var(--danger); }
+
+  /* ─ MODAL ─ */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.45); display: flex; align-items: center; justify-content: center; z-index: 999; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.visible { opacity: 1; pointer-events: auto; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-md); transform: translateY(10px); transition: transform 0.25s; }
+  .modal-overlay.visible .modal { transform: translateY(0); }
+  .modal-header { padding: 22px 24px 0; display: flex; align-items: center; justify-content: space-between; }
+  .modal-title { font-size: 1.1rem; font-weight: 600; }
+  .modal-close { background: none; border: none; color: var(--text-2); font-size: 20px; cursor: pointer; padding: 4px; }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 18px 24px 24px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 6px; }
+
+  /* ─ TOAST ─ */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9998; }
+  .toast { padding: 11px 16px; border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 500; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-md); animation: slideIn 0.25s ease; }
+  .toast.success { background: #ECFDF5; color: #166534; border: 1px solid #BBF7D0; }
+  .toast.error { background: #FEF2F2; color: #B91C1C; border: 1px solid #FECACA; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ─ STATS ─ */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+  .stat-value { font-size: 1.8rem; font-weight: 700; }
+  .stat-label { font-size: 0.8rem; color: var(--text-2); margin-top: 2px; }
+
+  /* ─ EMPTY ─ */
+  .empty { text-align: center; padding: 48px; color: var(--text-2); }
+  .empty .ei { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* ─ SETTINGS ─ */
+  .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; }
+  .settings-card h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 14px; }
+
+  .cat-group-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+  .cat-group-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: var(--surface2); border-bottom: 1px solid transparent; }
+  .cat-group-card.open .cat-group-head { border-bottom-color: var(--border); }
+  .cat-group-head .name { flex: 1; font-weight: 600; font-size: 0.92rem; }
+  .cat-group-head .meta { font-size: 0.78rem; color: var(--text-2); }
+  .cat-chevron {
+    width: 24px; height: 24px; min-width: 24px; border: none; border-radius: 6px;
+    background: transparent; color: var(--text-2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 0.72rem;
+    transition: transform 0.2s, background 0.15s, color 0.15s; flex-shrink: 0; padding: 0;
+  }
+  .cat-chevron:hover { background: var(--surface); color: var(--text); }
+  .cat-group-card.open .cat-chevron { transform: rotate(90deg); color: var(--accent); }
+  .cat-group-children { display: none; }
+  .cat-group-card.open .cat-group-children { display: block; }
+  .cat-child-row { display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 28px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+  .cat-child-row:last-child { border-bottom: none; }
+  .cat-child-row .name { flex: 1; }
+  .cat-child-row .meta { font-size: 0.76rem; color: var(--text-2); }
+  .cat-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .code-block { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-family: 'Courier New', monospace; font-size: 0.82rem; color: var(--accent); overflow-x: auto; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .content { padding: 16px; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo"><img src="" alt="LogiHub" style="width:40px;height:40px;border-radius:8px"></div>
+    <div class="login-title">Panel de administración</div>
+    <div class="login-sub">Centro de Ayuda LogiHub</div>
+    <div class="login-error" id="loginError">Credenciales incorrectas. Inténtalo de nuevo.</div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-control" id="loginEmail" placeholder="admin@faq.local" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Contraseña</label>
+      <input type="password" class="form-control" id="loginPw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header class="app-header">
+    <div class="app-logo">
+      <span>LogiHub</span> FAQ Admin <span class="admin-badge">PANEL INTERNO</span>
+    </div>
+    <div class="header-right">
+      <div class="live-dot" title="Servidor activo"></div>
+      <span style="font-size:0.8rem;color:var(--text-2)" id="adminUserLabel">Conectado</span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-label" style="margin-top:6px">Menú</div>
+      <div class="nav-item active" id="nav-faqs" onclick="showPage('faqs')"><span>❓</span> Preguntas <span class="badge" id="countBadge">0</span></div>
+      <div class="nav-item" id="nav-categories" onclick="showPage('categories')"><span>📂</span> Categorías</div>
+      <div class="nav-item" id="nav-suggestions" onclick="showPage('suggestions')"><span>💡</span> Sugerencias <span class="badge" id="suggestBadge">0</span></div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings')"><span>⚙️</span> Configuración</div>
+    </aside>
+
+    <div class="content">
+      <!-- FAQS PAGE -->
+      <div id="page-faqs">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Preguntas frecuentes</div>
+            <div class="page-sub" id="faqSubtitle"></div>
+          </div>
+          <button class="btn btn-primary" onclick="openAdd()">+ Nueva pregunta</button>
+        </div>
+        <div class="pagination-toolbar">
+          <label>
+            Mostrar
+            <select id="adminPageSizeSelect" onchange="changeAdminPageSize(this.value)">
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="75">75</option>
+              <option value="100">100</option>
+            </select>
+            por página
+          </label>
+          <span class="pagination-info" id="adminPageInfo"></span>
+        </div>
+        <div id="faqAdminList"></div>
+        <div id="adminPagination" class="pagination-bar"></div>
+      </div>
+
+      <!-- SUGGESTIONS PAGE -->
+      <div id="page-categories" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Categorías</div>
+            <div class="page-sub">Grupos principales (Operativo, Contable) y sus subcategorías</div>
+          </div>
+          <button class="btn btn-primary" onclick="openCatModal('group')">+ Nuevo grupo</button>
+        </div>
+        <div id="categoriesList"></div>
+      </div>
+
+      <div id="page-suggestions" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Sugerencias externas</div>
+            <div class="page-sub" id="suggestSubtitle">Preguntas enviadas por usuarios desde la vista pública</div>
+          </div>
+        </div>
+        <div id="suggestionsList"></div>
+      </div>
+
+      <!-- SETTINGS PAGE -->
+      <div id="page-settings" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Configuración</div>
+            <div class="page-sub">Opciones del servidor FAQ</div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>🎨 Apariencia pública</h3>
+          <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:16px">Logo y tipografía del header que ven tus usuarios en la vista pública.</p>
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;padding:14px;background:var(--surface2);border-radius:var(--radius-sm)">
+            <div id="logoPreview" style="width:38px;height:38px;min-width:38px;border-radius:8px;background:var(--accent-light);border:1px solid var(--accent-mid);display:flex;align-items:center;justify-content:center;overflow:hidden;font-weight:700;color:var(--accent)">?</div>
+            <div style="flex:1">
+              <div style="font-size:0.85rem;font-weight:600" id="brandPreview">Centro de Ayuda</div>
+              <div style="font-size:0.75rem;color:var(--text-2);margin-top:2px">Vista previa del header</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nombre del sitio</label>
+            <input type="text" class="form-control" id="cfgBrandName" placeholder="Centro de Ayuda">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Logo <span style="font-weight:400;text-transform:none">(PNG, JPG, SVG — recomendado cuadrado)</span></label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+                📷 Subir logo
+                <input type="file" id="cfgLogoFile" accept="image/*" style="display:none" onchange="uploadLogo(event)">
+              </label>
+              <span style="font-size:0.75rem;color:var(--text-2)">o pega imagen con Ctrl+V / ⌘V en esta sección</span>
+              <button class="btn btn-ghost btn-sm" id="cfgRemoveLogoBtn" onclick="removeLogo()" style="display:none">✕ Quitar logo</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tipografía</label>
+            <select class="form-control" id="cfgFont" onchange="updateBrandPreview()"></select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveSiteConfig()">Guardar apariencia</button>
+        </div>
+        <div class="settings-card">
+          <h3>👥 Usuarios administradores</h3>
+          <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:14px">Los admins se guardan en la tabla <code>users</code> de MySQL.</p>
+          <div id="usersList" style="margin-bottom:16px"></div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="newUserEmail" placeholder="nuevo@empresa.com">
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-control" id="newUserName" placeholder="Nombre del admin">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-control" id="newUserPw" placeholder="Mín. 6 caracteres">
+            </div>
+            <div class="form-group" style="margin-bottom:10px">
+              <label class="form-label">Rol</label>
+              <select class="form-control" id="newUserRole">
+                <option value="admin">Admin</option>
+                <option value="editor">Editor</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="createUser()">+ Agregar usuario</button>
+        </div>
+        <div class="settings-card">
+          <h3>🗄️ Base de datos MySQL</h3>
+          <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:14px">Las preguntas se guardan en MySQL. Configura la URL en <strong>.env</strong>:</p>
+          <div class="code-block">DATABASE_URL=mysql+pymysql://usuario:password@host:puerto/db?charset=utf8mb4</div>
+        </div>
+        <div class="settings-card">
+          <h3>🌐 URLs del sistema</h3>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:0.85rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm)">
+              <span style="color:var(--text-2)">Vista pública</span>
+              <a href="/" target="_blank" style="color:var(--accent)">http://localhost:3000/</a>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm)">
+              <span style="color:var(--text-2)">Panel admin</span>
+              <a href="/admin-panel" target="_blank" style="color:var(--accent)">http://localhost:3000/admin-panel</a>
+            </div>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>💾 Exportar / Importar datos</h3>
+          <p style="font-size:0.85rem;color:var(--text-2);margin-bottom:14px">Descarga un backup de todas las preguntas en formato JSON o importa desde un archivo previo.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost" onclick="exportJSON()">⬇ Exportar JSON</button>
+            <label class="btn btn-ghost" style="cursor:pointer">
+              ⬆ Importar JSON
+              <input type="file" accept=".json" style="display:none" onchange="importJSON(event)">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modalTitle">Nueva pregunta</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Grupo <span style="font-weight:400;text-transform:none">(obligatorio)</span></label>
+          <select class="form-control" id="fGroup" onchange="onFaqGroupChange()"></select>
+          <div class="form-hint">Operativo, Contable, etc.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Subcategoría <span style="font-weight:400;text-transform:none">(opcional)</span></label>
+          <select class="form-control" id="fCat"></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Orden</label>
+          <input type="number" class="form-control" id="fOrder" placeholder="1" min="1">
+          <div class="form-hint">Menor número = aparece primero</div>
+        </div>
+        <div class="form-group"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Pregunta</label>
+        <input type="text" class="form-control" id="fQ" placeholder="¿Cómo hago…?">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Respuesta</label>
+        <textarea class="form-control" id="fA" placeholder="Escribe la respuesta completa…" oninput="updateAnswerPreview()"></textarea>
+        <div class="form-hint">Puedes usar <code>**negrita**</code>, <code>*cursiva*</code>, listas con <code>- ítem</code> y párrafos separados por una línea en blanco.</div>
+        <div class="answer-preview-label">Vista previa</div>
+        <div class="answer-preview" id="answerPreview"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etiquetas <span style="font-weight:400;text-transform:none">(separadas por coma)</span></label>
+        <input type="text" class="form-control" id="fTags" placeholder="pago, envío, reembolso">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Archivos adjuntos</label>
+        <div class="upload-zone" id="uploadZone" tabindex="0" onclick="document.getElementById('fileIn').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="onDrop(event)" onpaste="onUploadPaste(event)">
+          <div class="ui">📎</div>
+          <p><strong>Haz clic</strong>, arrastra o <strong>pega</strong> (Ctrl+V / ⌘V)</p>
+          <p>Imágenes del portapapeles, PDF, Word, Excel — máx. 10 MB c/u</p>
+        </div>
+        <input type="file" id="fileIn" multiple accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none" onchange="onFileSelect(event)">
+        <div class="file-chips" id="fileChips"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveFAQ()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY MODAL -->
+<div class="modal-overlay" id="catModalOverlay">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title" id="catModalTitle">Nueva categoría</span>
+      <button class="modal-close" onclick="closeCatModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="catName" placeholder="Ej: Operativo, Inicio de sesión…">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Icono <span style="font-weight:400;text-transform:none">(emoji)</span></label>
+          <input type="text" class="form-control" id="catIcon" placeholder="⚙️" maxlength="10">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Orden</label>
+          <input type="number" class="form-control" id="catOrder" placeholder="1" min="0">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeCatModal()">Cancelar</button>
+        <button class="btn btn-primary" id="catSaveBtn" onclick="saveCategory()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE MODAL -->
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title">¿Anular pregunta?</span>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-2);font-size:0.9rem;margin-bottom:20px">La pregunta dejará de mostrarse al público, pero se conserva en la base de datos. Puedes restaurarla después.</p>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeConfirm()">Cancelar</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Anular</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* faq-api-prefix v7 — tema LogiHub */
+const BASE = '/faqs-logihub';
+function apiUrl(path) {
+  const base = location.pathname.startsWith(BASE) ? BASE : '';
+  return base + path;
+}
+
+function loadFaqContentScript() {
+  if (window.FaqContent) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = apiUrl('/faq-content.js');
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function updateAnswerPreview() {
+  const el = document.getElementById('answerPreview');
+  if (!el) return;
+  const text = document.getElementById('fA')?.value || '';
+  if (!text.trim()) {
+    el.innerHTML = '<span style="opacity:0.55">La vista previa aparecerá aquí…</span>';
+    return;
+  }
+  el.innerHTML = window.FaqContent
+    ? FaqContent.formatFaqContent(text)
+    : esc(text);
+}
+(function initFavicon() {
+  const el = document.getElementById('faviconLink');
+  if (el) el.href = apiUrl('/favicon.ico');
+  const loginImg = document.querySelector('#loginScreen img');
+  if (loginImg) loginImg.src = apiUrl('/favicon.ico');
+})();
+
+const SESSION_KEY = 'faq_admin_session';
+
+function saveSession(token, user) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ token, user }));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+async function enterApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('adminUserLabel').textContent = adminUser?.name || adminUser?.email || 'Conectado';
+  await loadFAQs();
+  await loadSuggestions();
+  await loadUsers();
+  await loadSiteConfig();
+}
+
+async function tryRestoreSession() {
+  const saved = loadSession();
+  if (!saved?.token) return;
+  adminToken = saved.token;
+  adminUser = saved.user || null;
+  try {
+    const r = await fetch(apiUrl('/api/admin/faqs?page=1&limit=1'), { headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    await enterApp();
+  } catch {
+    clearSession();
+    adminToken = '';
+    adminUser = null;
+  }
+}
+
+let adminToken = '';
+let adminUser  = null;
+let faqs       = [];
+let adminMeta  = {};
+let categoryTree = [];
+let expandedAdminGroups = new Set();
+let editingCatId = null;
+let editingCatParentId = null;
+let editingCatType = 'group';
+let adminPage  = 1;
+let adminPageSize = 25;
+let siteConfig = { brandName: 'Centro de Ayuda LogiHub', logoUrl: null, fontFamily: 'satoshi' };
+let siteFonts  = {};
+let suggestions = [];
+let editingId = null;
+let pendingFiles = []; // archivos nuevos a subir
+let existingAttachments = []; // adjuntos ya guardados (al editar)
+
+function authHeaders(extra = {}) {
+  return { 'x-admin-token': adminToken, ...extra };
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  try {
+    const r = await fetch(apiUrl('/api/admin/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pw })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (r.ok) {
+      adminToken = data.token;
+      adminUser = data.user;
+      saveSession(adminToken, adminUser);
+      await enterApp();
+    } else {
+      document.getElementById('loginError').style.display = 'block';
+      document.getElementById('loginPw').value = '';
+    }
+  } catch(e) { toast('Error de conexión con el servidor', 'error'); }
+}
+
+function doLogout() {
+  adminToken = '';
+  adminUser = null;
+  clearSession();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPw').value = '';
+  document.getElementById('adminUserLabel').textContent = 'Conectado';
+}
+
+// ── NAVIGATION ──
+function showPage(name) {
+  ['faqs','categories','suggestions','settings'].forEach(p => {
+    document.getElementById(`page-${p}`).style.display = p === name ? 'block' : 'none';
+    document.getElementById(`nav-${p}`).classList.toggle('active', p === name);
+  });
+  if (name === 'settings') { loadUsers(); loadSiteConfig(); }
+  if (name === 'suggestions') loadSuggestions();
+  if (name === 'categories') loadCategories();
+}
+
+// ── LOAD ──
+async function loadFAQs(page = adminPage) {
+  try {
+    const params = new URLSearchParams({ page, limit: adminPageSize });
+    const r = await fetch(apiUrl(`/api/admin/faqs?${params}`), { headers: authHeaders() });
+    const data = await r.json();
+    faqs = data.faqs || [];
+    adminMeta = data.meta || {};
+    categoryTree = adminMeta.categoryTree || categoryTree;
+    adminPage = adminMeta.page || page;
+    if (adminMeta.limit) adminPageSize = adminMeta.limit;
+    const sel = document.getElementById('adminPageSizeSelect');
+    if (sel) sel.value = String(adminPageSize);
+    renderStats();
+    renderList();
+    renderAdminPagination();
+    document.getElementById('countBadge').textContent = adminMeta.active ?? faqs.filter(f => !f.isAnnulled).length;
+  } catch(e) { toast('Error cargando datos', 'error'); }
+}
+
+function changeAdminPageSize(size) {
+  adminPageSize = parseInt(size, 10) || 25;
+  loadFAQs(1);
+}
+
+function goToAdminPage(page) {
+  const total = adminMeta.totalPages || 1;
+  if (page < 1 || page > total || page === adminPage) return;
+  loadFAQs(page).then(() => {
+    document.getElementById('faqAdminList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+function renderAdminPagination() {
+  const el = document.getElementById('adminPagination');
+  const info = document.getElementById('adminPageInfo');
+  const total = adminMeta.total || 0;
+  const totalPages = adminMeta.totalPages || 1;
+
+  if (!total) {
+    el.innerHTML = '';
+    if (info) info.textContent = '';
+    return;
+  }
+
+  const from = (adminPage - 1) * adminPageSize + 1;
+  const to = from + faqs.length - 1;
+  if (info) info.textContent = `${from}–${to} de ${total} · Página ${adminPage} de ${totalPages}`;
+
+  const windowSize = 10;
+  const windowStart = Math.floor((adminPage - 1) / windowSize) * windowSize + 1;
+  const windowEnd = Math.min(windowStart + windowSize - 1, totalPages);
+
+  let html = `<div class="pagination-pages">`;
+  if (windowStart > 1) html += `<button class="page-btn nav-btn" onclick="goToAdminPage(${windowStart - 1})" title="Bloque anterior">«</button>`;
+  if (adminPage > 1) html += `<button class="page-btn nav-btn" onclick="goToAdminPage(${adminPage - 1})" title="Anterior">‹</button>`;
+  for (let p = windowStart; p <= windowEnd; p++) {
+    html += `<button class="page-btn ${p === adminPage ? 'active' : ''}" onclick="goToAdminPage(${p})">${p}</button>`;
+  }
+  if (adminPage < totalPages) html += `<button class="page-btn nav-btn" onclick="goToAdminPage(${adminPage + 1})" title="Siguiente">›</button>`;
+  if (windowEnd < totalPages) html += `<button class="page-btn nav-btn" onclick="goToAdminPage(${windowEnd + 1})" title="Bloque siguiente">»</button>`;
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString('es-MX', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false
+  });
+}
+
+// ── STATS ──
+function renderStats() {
+  const active = adminMeta.active ?? 0;
+  const annulled = adminMeta.annulled ?? 0;
+  const catCount = adminMeta.categories ?? 0;
+  const attCount = adminMeta.attachments ?? 0;
+
+  document.getElementById('statsGrid').innerHTML = [
+    { value: active, label: 'Activas', icon: '❓' },
+    { value: annulled, label: 'Anuladas', icon: '🚫' },
+    { value: catCount, label: 'Categorías', icon: '📂' },
+    { value: attCount, label: 'Archivos adjuntos', icon: '📎' },
+  ].map(s => `<div class="stat-card"><div style="font-size:1.4rem;margin-bottom:4px">${s.icon}</div><div class="stat-value">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('');
+
+  const lastStr = adminMeta.lastUpdatedAt ? ` · Última actualización: ${formatDate(adminMeta.lastUpdatedAt)}` : '';
+  const annulStr = annulled ? ` · ${annulled} anulada${annulled!==1?'s':''}` : '';
+  document.getElementById('faqSubtitle').textContent = `${active} activa${active!==1?'s':''} en ${catCount} categoría${catCount!==1?'s':''}${annulStr}${lastStr}`;
+}
+
+// ── LIST ──
+function renderList() {
+  const list = document.getElementById('faqAdminList');
+  if (!faqs.length) {
+    list.innerHTML = `<div class="empty"><div class="ei">📭</div><p>No hay preguntas aún. ¡Agrega la primera!</p></div>`;
+    return;
+  }
+  const sorted = [...faqs].sort((a,b) => (a.order||999)-(b.order||999)||a.createdAt-b.createdAt);
+  list.innerHTML = sorted.map(f => {
+    const tags = (f.tags||[]).slice(0,3).map(t => `<span class="tag-badge">${esc(t)}</span>`).join('');
+    const attLen = (f.attachments||[]).length;
+    const updatedTs = f.updatedAt || f.createdAt;
+    const dateLabel = f.updatedAt ? 'Actualizado' : 'Publicado';
+    const annulledBadge = f.isAnnulled ? `<span class="annulled-badge">Anulada${f.deletedAt ? ' · ' + formatDate(f.deletedAt) : ''}</span>` : '';
+    const actions = f.isAnnulled
+      ? `<button class="btn btn-success btn-sm" onclick="restoreFAQ(${f.id})">↩ Restaurar</button>`
+      : `<button class="btn btn-ghost btn-sm" onclick="openEdit(${f.id})">✏️ Editar</button>
+         <button class="btn btn-danger btn-sm" onclick="confirmDelete(${f.id})" title="Anular">🚫</button>`;
+    const catLabel = f.categoryGroup
+      ? (f.categoryId && f.category && f.category !== f.categoryGroup
+          ? `${f.categoryGroup} › ${f.category}`
+          : f.categoryGroup)
+      : (f.category || 'General');
+    return `<div class="faq-row ${f.isAnnulled ? 'annulled' : ''}">
+      <div style="margin-top:2px;font-size:20px">${orderNum(f.order)}</div>
+      <div class="faq-row-info">
+        <div class="faq-row-q" title="${esc(f.question)}">${esc(f.question)}</div>
+        <div class="faq-row-meta">
+          <span class="cat-badge">${esc(catLabel)}</span>
+          ${annulledBadge}
+          ${tags}
+          ${attLen ? `<span class="att-badge">📎 ${attLen}</span>` : ''}
+          ${updatedTs ? `<span class="date-badge" title="${dateLabel}">📅 ${dateLabel}: ${formatDate(updatedTs)}</span>` : ''}
+        </div>
+      </div>
+      <div class="faq-row-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+function orderNum(n) {
+  const num = parseInt(n);
+  if (!num || num >= 999) return '·';
+  return `<span style="font-size:0.75rem;color:var(--text-2);font-weight:600">${num}</span>`;
+}
+
+function populateFaqCategorySelects(groupId, categoryId) {
+  const tree = categoryTree.length ? categoryTree : (adminMeta.categoryTree || []);
+  const fGroup = document.getElementById('fGroup');
+  if (!tree.length) {
+    fGroup.innerHTML = '<option value="">— Configura categorías primero —</option>';
+    document.getElementById('fCat').innerHTML = '<option value="">—</option>';
+    return;
+  }
+  fGroup.innerHTML = tree.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+  if (groupId) fGroup.value = String(groupId);
+  onFaqGroupChange(categoryId);
+}
+
+function onFaqGroupChange(categoryId) {
+  const tree = categoryTree.length ? categoryTree : (adminMeta.categoryTree || []);
+  const gid = parseInt(document.getElementById('fGroup').value, 10);
+  const group = tree.find(g => g.id === gid);
+  const fCat = document.getElementById('fCat');
+  const kids = group ? (group.children || []) : [];
+  let html = '<option value="">— Solo grupo (sin subcategoría) —</option>';
+  if (kids.length) {
+    html += kids.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  }
+  fCat.innerHTML = html;
+  if (categoryId) fCat.value = String(categoryId);
+}
+
+// ── MODAL ──
+function openAdd(prefillQuestion = '') {
+  editingId = null; pendingFiles = []; existingAttachments = [];
+  document.getElementById('modalTitle').textContent = 'Nueva pregunta';
+  document.getElementById('saveBtn').textContent = 'Guardar';
+  ['fQ','fA','fTags','fOrder'].forEach(id => document.getElementById(id).value = '');
+  populateFaqCategorySelects();
+  if (prefillQuestion) document.getElementById('fQ').value = prefillQuestion;
+  document.getElementById('fileChips').innerHTML = '';
+  updateAnswerPreview();
+  document.getElementById('modalOverlay').classList.add('visible');
+
+  setTimeout(() => (prefillQuestion ? document.getElementById('fA') : document.getElementById('fQ')).focus(), 120);
+}
+
+async function openEdit(id) {
+  let f = faqs.find(x => x.id === id);
+  if (!f) {
+    try {
+      const r = await fetch(apiUrl(`/api/admin/faqs/${id}`), { headers: authHeaders() });
+      if (!r.ok) { toast('Pregunta no encontrada', 'error'); return; }
+      f = await r.json();
+    } catch { toast('Error al cargar la pregunta', 'error'); return; }
+  }
+  editingId = id; pendingFiles = []; existingAttachments = [...(f.attachments||[])];
+  document.getElementById('modalTitle').textContent = 'Editar pregunta';
+  document.getElementById('saveBtn').textContent = 'Actualizar';
+  document.getElementById('fQ').value = f.question;
+  document.getElementById('fA').value = f.answer;
+  populateFaqCategorySelects(f.categoryGroupId || f.groupId, f.categoryId);
+  document.getElementById('fTags').value = (f.tags||[]).join(', ');
+  document.getElementById('fOrder').value = f.order >= 999 ? '' : (f.order||'');
+  renderChips();
+  updateAnswerPreview();
+  document.getElementById('modalOverlay').classList.add('visible');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('visible');
+  pendingFiles = []; existingAttachments = [];
+}
+
+// ── SAVE ──
+async function saveFAQ() {
+  const question = document.getElementById('fQ').value.trim();
+  const answer   = document.getElementById('fA').value.trim();
+  if (!question) { toast('La pregunta es obligatoria', 'error'); return; }
+  if (!answer)   { toast('La respuesta es obligatoria', 'error'); return; }
+
+  const groupId = parseInt(document.getElementById('fGroup').value, 10) || null;
+  const categoryId = parseInt(document.getElementById('fCat').value, 10) || null;
+  if (!groupId) { toast('Selecciona un grupo (Operativo o Contable)', 'error'); return; }
+  const tags     = document.getElementById('fTags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const order    = parseInt(document.getElementById('fOrder').value) || 999;
+
+  document.getElementById('saveBtn').textContent = 'Guardando…';
+  document.getElementById('saveBtn').disabled = true;
+
+  // 1. Subir nuevos archivos
+  let newAttachments = [];
+  if (pendingFiles.length) {
+    const formData = new FormData();
+    pendingFiles.forEach(f => formData.append('files', f.fileObj));
+    try {
+      const r = await fetch(apiUrl('/api/admin/upload'), {
+        method: 'POST',
+        headers: authHeaders(),
+        body: formData
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || 'Error al subir');
+      newAttachments = data.files || [];
+    } catch(e) { toast(e.message || 'Error subiendo archivos', 'error'); resetSaveBtn(); return; }
+  }
+
+  const allAttachments = [...existingAttachments, ...newAttachments];
+
+  // 2. Crear o actualizar
+  const body = { question, answer, groupId, categoryId, tags, order, attachments: allAttachments };
+  try {
+    const url    = editingId ? apiUrl(`/api/admin/faqs/${editingId}`) : apiUrl('/api/admin/faqs');
+    const method = editingId ? 'PUT' : 'POST';
+    const r = await fetch(url, {
+      method,
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (r.status === 401) throw new Error('Sesión expirada — vuelve a iniciar sesión');
+      throw new Error(data.error || 'Error al guardar');
+    }
+    toast(editingId ? 'Pregunta actualizada ✓' : 'Pregunta creada ✓', 'success');
+    closeModal();
+    await loadFAQs();
+  } catch(e) { toast(e.message || 'Error guardando', 'error'); }
+  resetSaveBtn();
+}
+
+function resetSaveBtn() {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = false;
+  btn.textContent = editingId ? 'Actualizar' : 'Guardar';
+}
+
+// ── DELETE ──
+let deletingId = null;
+function confirmDelete(id) {
+  deletingId = id;
+  document.getElementById('confirmOverlay').classList.add('visible');
+  document.getElementById('confirmDeleteBtn').onclick = doDelete;
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('visible'); deletingId = null; }
+async function doDelete() {
+  if (!deletingId) return;
+  try {
+    await fetch(apiUrl(`/api/admin/faqs/${deletingId}`), {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    toast('Pregunta anulada', 'success');
+    closeConfirm();
+    await loadFAQs();
+  } catch(e) { toast('Error al anular', 'error'); }
+}
+
+async function restoreFAQ(id) {
+  try {
+    const r = await fetch(apiUrl(`/api/admin/faqs/${id}/restore`), {
+      method: 'POST',
+      headers: authHeaders()
+    });
+    if (!r.ok) throw new Error();
+    toast('Pregunta restaurada ✓', 'success');
+    await loadFAQs();
+  } catch(e) { toast('Error al restaurar', 'error'); }
+}
+
+// ── FILES ──
+function getClipboardImages(dataTransfer) {
+  if (!dataTransfer?.items) return [];
+  const files = [];
+  for (const item of dataTransfer.items) {
+    if (item.kind !== 'file' || !item.type.startsWith('image/')) continue;
+    const file = item.getAsFile();
+    if (!file) continue;
+    const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+    const name = file.name && file.name !== 'image.png' ? file.name : `portapapeles-${Date.now()}.${ext}`;
+    files.push(new File([file], name, { type: file.type }));
+  }
+  return files;
+}
+
+function onUploadPaste(e) {
+  const images = getClipboardImages(e.clipboardData);
+  if (!images.length) return;
+  e.preventDefault();
+  e.stopPropagation();
+  addFiles(images);
+  document.getElementById('uploadZone').classList.add('drag-over');
+  setTimeout(() => document.getElementById('uploadZone').classList.remove('drag-over'), 400);
+  toast('Imagen pegada desde portapapeles', 'success');
+}
+
+function onModalPaste(e) {
+  if (!document.getElementById('modalOverlay').classList.contains('visible')) return;
+  const images = getClipboardImages(e.clipboardData);
+  if (!images.length) return;
+  const el = document.activeElement;
+  const inTextField = el && (el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !['file','checkbox','radio','button'].includes(el.type)));
+  if (inTextField) {
+    const hasText = [...e.clipboardData.items].some(i => i.kind === 'string' && (i.type === 'text/plain' || i.type === 'text/html'));
+    if (hasText) return;
+  }
+  e.preventDefault();
+  addFiles(images);
+  toast('Imagen pegada desde portapapeles', 'success');
+}
+
+function onSettingsPaste(e) {
+  const page = document.getElementById('page-settings');
+  if (!page || page.style.display === 'none') return;
+  const images = getClipboardImages(e.clipboardData);
+  if (!images.length) return;
+  e.preventDefault();
+  uploadLogoFile(images[0]);
+}
+
+function onFileSelect(e) { addFiles([...e.target.files]); e.target.value = ''; }
+function dragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag-over'); }
+function dragLeave(e) { document.getElementById('uploadZone').classList.remove('drag-over'); }
+function onDrop(e) { e.preventDefault(); document.getElementById('uploadZone').classList.remove('drag-over'); addFiles([...e.dataTransfer.files]); }
+
+function addFiles(files) {
+  const MAX = 10 * 1024 * 1024;
+  files.forEach(f => {
+    if (f.size > MAX) { toast(`${f.name} supera 10 MB`, 'error'); return; }
+    pendingFiles.push({ name: f.name, type: f.type, fileObj: f, preview: f.type.startsWith('image/') ? URL.createObjectURL(f) : null });
+    renderChips();
+  });
+}
+
+function renderChips() {
+  const container = document.getElementById('fileChips');
+  const existChips = existingAttachments.map((a, i) => {
+    const icon = a.type && a.type.startsWith('image/') ? `<img src="${a.url}" alt="">` : fileIcon(a.type);
+    return `<div class="file-chip">${icon}<span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.originalName||a.name||'Archivo')}</span><button class="rm" onclick="removeExisting(${i})">✕</button></div>`;
+  });
+  const newChips = pendingFiles.map((f, i) => {
+    const icon = f.preview ? `<img src="${f.preview}" alt="">` : fileIcon(f.type);
+    return `<div class="file-chip">${icon}<span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</span><button class="rm" onclick="removePending(${i})">✕</button></div>`;
+  });
+  container.innerHTML = [...existChips, ...newChips].join('');
+}
+
+function removeExisting(i) { existingAttachments.splice(i, 1); renderChips(); }
+function removePending(i)  { pendingFiles.splice(i, 1); renderChips(); }
+
+function fileIcon(type) {
+  if (!type) return '📎';
+  if (type.includes('pdf')) return '📄';
+  if (type.includes('word')||type.includes('doc')) return '📝';
+  if (type.includes('excel')||type.includes('sheet')||type.includes('xls')) return '📊';
+  return '📎';
+}
+
+// ── SUGGESTIONS ──
+async function loadSuggestions() {
+  try {
+    const r = await fetch(apiUrl('/api/admin/suggestions'), { headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    suggestions = data.suggestions || [];
+    document.getElementById('suggestBadge').textContent = data.pending || 0;
+    renderSuggestions();
+  } catch(e) { /* silencioso */ }
+}
+
+function renderSuggestions() {
+  const el = document.getElementById('suggestionsList');
+  const pending = suggestions.filter(s => s.status === 'pending').length;
+  document.getElementById('suggestSubtitle').textContent =
+    `${pending} pendiente${pending !== 1 ? 's' : ''} · ${suggestions.length} en total`;
+
+  if (!suggestions.length) {
+    el.innerHTML = '<div class="empty"><div class="ei">💡</div><p>Aún no hay sugerencias de usuarios.</p></div>';
+    return;
+  }
+
+  el.innerHTML = suggestions.map(s => {
+    const isPending = s.status === 'pending';
+    const contact = [s.name, s.email].filter(Boolean).map(v => esc(v)).join(' · ');
+    return `<div class="faq-row ${isPending ? '' : 'annulled'}" style="opacity:${isPending ? 1 : 0.7}">
+      <div class="faq-row-info">
+        <div class="faq-row-q" style="white-space:normal;text-overflow:unset">${esc(s.suggestion)}</div>
+        <div class="faq-row-meta">
+          ${isPending ? '<span class="cat-badge" style="background:rgba(245,158,11,0.15);color:#D97706">Pendiente</span>' : '<span class="annulled-badge">Revisada</span>'}
+          <span class="date-badge">📅 ${formatDate(s.createdAt)}</span>
+          ${contact ? `<span class="date-badge">👤 ${contact}</span>` : ''}
+        </div>
+      </div>
+      <div class="faq-row-actions">
+        ${isPending ? `<button class="btn btn-primary btn-sm" onclick="useSuggestion(${s.id})">+ Crear FAQ</button>
+        <button class="btn btn-ghost btn-sm" onclick="markReviewed(${s.id})">✓ Revisada</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function useSuggestion(id) {
+  const s = suggestions.find(x => x.id === id);
+  if (!s) return;
+  showPage('faqs');
+  openAdd(s.suggestion);
+}
+
+async function markReviewed(id) {
+  try {
+    const r = await fetch(apiUrl(`/api/admin/suggestions/${id}/reviewed`), {
+      method: 'PATCH',
+      headers: authHeaders()
+    });
+    if (!r.ok) throw new Error();
+    toast('Marcada como revisada', 'success');
+    await loadSuggestions();
+  } catch(e) { toast('Error al actualizar', 'error'); }
+}
+
+// ── SITE CONFIG ──
+async function loadSiteConfig() {
+  try {
+    const r = await fetch(apiUrl('/api/admin/site-config'), { headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    siteConfig = { brandName: data.brandName, logoUrl: data.logoUrl, fontFamily: data.fontFamily };
+    siteFonts = data.fonts || {};
+    document.getElementById('cfgBrandName').value = siteConfig.brandName || '';
+    document.getElementById('cfgFont').innerHTML = Object.entries(siteFonts).map(([k, v]) =>
+      `<option value="${k}" ${siteConfig.fontFamily === k ? 'selected' : ''}>${esc(v.label)}</option>`
+    ).join('');
+    updateBrandPreview();
+  } catch(e) { /* silencioso */ }
+}
+
+function updateBrandPreview() {
+  const name = document.getElementById('cfgBrandName').value.trim() || 'Centro de Ayuda';
+  document.getElementById('brandPreview').textContent = name;
+  const preview = document.getElementById('logoPreview');
+  if (siteConfig.logoUrl) {
+    preview.innerHTML = `<img src="${siteConfig.logoUrl}" alt="" style="width:100%;height:100%;object-fit:contain">`;
+    document.getElementById('cfgRemoveLogoBtn').style.display = 'inline-flex';
+  } else {
+    preview.textContent = name.charAt(0).toUpperCase();
+    preview.style.fontFamily = 'inherit';
+    document.getElementById('cfgRemoveLogoBtn').style.display = 'none';
+  }
+}
+
+async function uploadLogoFile(file) {
+  if (!file?.type?.startsWith('image/')) { toast('Solo se permiten imágenes', 'error'); return; }
+  const formData = new FormData();
+  formData.append('files', file);
+  try {
+    const r = await fetch(apiUrl('/api/admin/upload'), { method: 'POST', headers: authHeaders(), body: formData });
+    const data = await r.json();
+    if (!r.ok || !data.files?.length) throw new Error();
+    siteConfig.logoUrl = data.files[0].url;
+    updateBrandPreview();
+    toast('Logo listo — guarda para aplicar', 'success');
+  } catch(e) { toast('Error al subir el logo', 'error'); }
+}
+
+async function uploadLogo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  await uploadLogoFile(file);
+  e.target.value = '';
+}
+
+function removeLogo() {
+  siteConfig.logoUrl = null;
+  updateBrandPreview();
+}
+
+async function saveSiteConfig() {
+  const brandName = document.getElementById('cfgBrandName').value.trim() || 'Centro de Ayuda';
+  const fontFamily = document.getElementById('cfgFont').value;
+  try {
+    const r = await fetch(apiUrl('/api/admin/site-config'), {
+      method: 'PUT',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ brandName, logoUrl: siteConfig.logoUrl, fontFamily })
+    });
+    if (!r.ok) throw new Error();
+    siteConfig = await r.json();
+    toast('Apariencia guardada ✓', 'success');
+    updateBrandPreview();
+  } catch(e) { toast('Error al guardar', 'error'); }
+}
+
+document.getElementById('cfgBrandName')?.addEventListener('input', updateBrandPreview);
+
+// ── USERS ──
+async function loadUsers() {
+  const el = document.getElementById('usersList');
+  if (!el) return;
+  try {
+    const r = await fetch(apiUrl('/api/admin/users'), { headers: authHeaders() });
+    if (!r.ok) throw new Error();
+    const users = await r.json();
+    if (!users.length) {
+      el.innerHTML = '<p style="font-size:0.85rem;color:var(--text-2)">No hay usuarios registrados.</p>';
+      return;
+    }
+    el.innerHTML = users.map(u => `
+      <div class="faq-row" style="margin-bottom:6px;padding:12px 14px">
+        <div class="faq-row-info">
+          <div class="faq-row-q">${esc(u.name)} <span style="color:var(--text-2);font-weight:400">(${esc(u.email)})</span></div>
+          <div class="faq-row-meta">
+            <span class="cat-badge">${esc(u.role)}</span>
+            ${u.lastLoginAt ? `<span class="date-badge">📅 Último acceso: ${formatDate(u.lastLoginAt)}</span>` : '<span class="date-badge">Sin acceso aún</span>'}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) {
+    el.innerHTML = '<p style="font-size:0.85rem;color:var(--danger)">No se pudieron cargar los usuarios.</p>';
+  }
+}
+
+async function createUser() {
+  const email = document.getElementById('newUserEmail').value.trim();
+  const name = document.getElementById('newUserName').value.trim();
+  const password = document.getElementById('newUserPw').value;
+  const role = document.getElementById('newUserRole').value;
+  if (!email || !password) { toast('Email y contraseña son obligatorios', 'error'); return; }
+  try {
+    const r = await fetch(apiUrl('/api/admin/users'), {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ email, password, name: name || 'Administrador', role })
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Error');
+    toast('Usuario creado ✓', 'success');
+    document.getElementById('newUserEmail').value = '';
+    document.getElementById('newUserName').value = '';
+    document.getElementById('newUserPw').value = '';
+    await loadUsers();
+  } catch(e) { toast(e.message || 'Error al crear usuario', 'error'); }
+}
+
+// ── EXPORT / IMPORT ──
+async function exportJSON() {
+  try {
+    const r = await fetch(apiUrl('/api/admin/faqs?all=1'), { headers: authHeaders() });
+    const data = await r.json();
+    const all = data.faqs || [];
+    const blob = new Blob([JSON.stringify(all, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `faq-backup-${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    toast(`Backup descargado (${all.length} preguntas)`, 'success');
+  } catch(e) { toast('Error al exportar', 'error'); }
+}
+
+async function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if (!Array.isArray(data)) throw new Error();
+    if (!confirm(`¿Importar ${data.length} preguntas nuevas?\n\nSe añadirán al listado actual. Las preguntas que ya tienes no se borran ni se modifican.`)) return;
+    // Save each via API
+    for (const f of data) {
+      const r = await fetch(apiUrl('/api/admin/faqs'), {
+        method: 'POST',
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(f)
+      });
+    }
+    toast(`${data.length} preguntas importadas`, 'success');
+    await loadFAQs();
+  } catch(e) { toast('Error al importar el archivo', 'error'); }
+  e.target.value = '';
+}
+
+// ── CATEGORIES ──
+async function loadCategories() {
+  try {
+    const r = await fetch(apiUrl('/api/admin/categories'), { headers: authHeaders() });
+    const data = await r.json();
+    categoryTree = data.tree || [];
+    renderCategoriesPage();
+  } catch (e) { toast('Error cargando categorías', 'error'); }
+}
+
+function toggleAdminGroupExpand(groupId) {
+  if (expandedAdminGroups.has(groupId)) expandedAdminGroups.delete(groupId);
+  else expandedAdminGroups.add(groupId);
+  renderCategoriesPage();
+}
+
+function renderCategoriesPage() {
+  const el = document.getElementById('categoriesList');
+  if (!categoryTree.length) {
+    el.innerHTML = `<div class="empty"><div class="ei">📂</div><p>No hay grupos aún. Crea <strong>Operativo</strong> y <strong>Contable</strong>, luego agrega subcategorías.</p></div>`;
+    return;
+  }
+  el.innerHTML = categoryTree.map(group => {
+    const expanded = expandedAdminGroups.has(group.id);
+    const kids = (group.children || []).map(child => `
+      <div class="cat-child-row">
+        <span>${child.icon || '📄'}</span>
+        <span class="name">${esc(child.name)}</span>
+        <span class="meta">${child.count} pregunta${child.count !== 1 ? 's' : ''} · orden ${child.sortOrder ?? 0}</span>
+        <div class="cat-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openCatModal('child', ${group.id}, ${child.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCategoryItem(${child.id}, '${esc(child.name)}')">🗑</button>
+        </div>
+      </div>`).join('');
+    return `<div class="cat-group-card ${expanded ? 'open' : ''}">
+      <div class="cat-group-head">
+        <button type="button" class="cat-chevron" onclick="toggleAdminGroupExpand(${group.id})" title="${expanded ? 'Colapsar' : 'Expandir'}" aria-expanded="${expanded}">▸</button>
+        <span style="font-size:1.1rem">${group.icon || '📁'}</span>
+        <span class="name">${esc(group.name)}</span>
+        <span class="meta">${group.count} pregunta${group.count !== 1 ? 's' : ''} · orden ${group.sortOrder ?? 0}</span>
+        <div class="cat-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openCatModal('child', ${group.id})">+ Sub</button>
+          <button class="btn btn-ghost btn-sm" onclick="openCatModal('group', null, ${group.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCategoryItem(${group.id}, '${esc(group.name)}')">🗑</button>
+        </div>
+      </div>
+      <div class="cat-group-children">
+        ${kids || '<div class="cat-child-row" style="color:var(--text-2)">Sin subcategorías — usa + Sub</div>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openCatModal(type, parentId = null, id = null) {
+  editingCatType = type;
+  editingCatId = id || null;
+  editingCatParentId = type === 'child' ? parentId : null;
+  document.getElementById('catModalTitle').textContent = id
+    ? (type === 'group' ? 'Editar grupo' : 'Editar subcategoría')
+    : (type === 'group' ? 'Nuevo grupo' : 'Nueva subcategoría');
+  document.getElementById('catName').value = '';
+  document.getElementById('catIcon').value = type === 'group' ? '📁' : '📄';
+  document.getElementById('catOrder').value = '';
+
+  if (id) {
+    const item = type === 'group'
+      ? categoryTree.find(g => g.id === id)
+      : categoryTree.flatMap(g => (g.children || []).map(c => ({ ...c, groupId: g.id }))).find(c => c.id === id);
+    if (item) {
+      document.getElementById('catName').value = item.name || '';
+      document.getElementById('catIcon').value = item.icon || '';
+      document.getElementById('catOrder').value = item.sortOrder ?? '';
+    }
+  }
+
+  document.getElementById('catModalOverlay').classList.add('visible');
+  setTimeout(() => document.getElementById('catName').focus(), 100);
+}
+
+function closeCatModal() {
+  document.getElementById('catModalOverlay').classList.remove('visible');
+  editingCatId = null;
+  editingCatParentId = null;
+}
+
+async function saveCategory() {
+  const name = document.getElementById('catName').value.trim();
+  const icon = document.getElementById('catIcon').value.trim();
+  const sortOrder = document.getElementById('catOrder').value;
+  if (!name) { toast('El nombre es obligatorio', 'error'); return; }
+
+  const btn = document.getElementById('catSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  const body = {
+    name,
+    icon: icon || null,
+    sortOrder,
+    parentId: editingCatType === 'child' ? editingCatParentId : null
+  };
+
+  try {
+    const url = editingCatId
+      ? apiUrl(`/api/admin/categories/${editingCatId}`)
+      : apiUrl('/api/admin/categories');
+    const r = await fetch(url, {
+      method: editingCatId ? 'PUT' : 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body)
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'Error al guardar');
+    toast('Categoría guardada ✓', 'success');
+    closeCatModal();
+    await loadCategories();
+    await loadFAQs(adminPage);
+  } catch (e) {
+    toast(e.message || 'Error guardando', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = 'Guardar';
+}
+
+async function deleteCategoryItem(id, label) {
+  if (!confirm(`¿Eliminar "${label}"?`)) return;
+  try {
+    const r = await fetch(apiUrl(`/api/admin/categories/${id}`), {
+      method: 'DELETE',
+      headers: authHeaders()
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'No se pudo eliminar');
+    toast('Categoría eliminada', 'success');
+    await loadCategories();
+    await loadFAQs(adminPage);
+  } catch (e) { toast(e.message || 'Error al eliminar', 'error'); }
+}
+
+// ── UTILS ──
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${type==='success'?'✓':'✕'}</span> ${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target.id==='modalOverlay') closeModal(); });
+document.getElementById('catModalOverlay').addEventListener('click', e => { if(e.target.id==='catModalOverlay') closeCatModal(); });
+document.addEventListener('paste', e => { onModalPaste(e); onSettingsPaste(e); });
+document.getElementById('confirmOverlay').addEventListener('click', e => { if(e.target.id==='confirmOverlay') closeConfirm(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape') { closeModal(); closeCatModal(); closeConfirm(); } });
+loadFaqContentScript().catch(() => {}).finally(() => tryRestoreSession());
+</script>
+</body>
+</html>

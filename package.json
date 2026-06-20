@@ -8,7 +8,9 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build:public": "vite build --config frontend-public/vite.config.js",
-    "build:win": "npm run build:public && node scripts/build-windows.js"
+    "build:admin": "vite build --config frontend-admin/vite.config.js",
+    "build:frontend": "npm run build:public && npm run build:admin",
+    "build:win": "npm run build:frontend && node scripts/build-windows.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -26,6 +28,7 @@
       "public/favicon.ico",
       "public/logo-logihub.svg",
       "admin/index.html",
+      "admin/assets/**/*",
       ".env.example",
       "node_modules/mysql2/**/*"
     ],

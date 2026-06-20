@@ -576,7 +576,14 @@ router.delete('/api/admin/upload/:filename', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── PANEL ADMIN ───────────────────────────────────────────
+// Panel admin: admin/index.html (generado por Vue — npm run build:admin)
+router.use('/admin-panel/assets', express.static(paths.assetPath('admin', 'assets'), {
+  maxAge: '1h',
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.js')) res.type('application/javascript');
+    if (filePath.endsWith('.css')) res.type('text/css');
+  }
+}));
 router.get('/admin-panel', (req, res) => {
   sendHtmlWithBase(paths.assetPath('admin', 'index.html'), res);
 });
