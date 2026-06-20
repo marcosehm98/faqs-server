@@ -97,6 +97,13 @@ const router = express.Router();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 router.use('/uploads', express.static(UPLOADS_DIR));
+router.use('/assets', express.static(paths.assetPath('public', 'assets'), {
+  maxAge: '1h',
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.js')) res.type('application/javascript');
+    if (filePath.endsWith('.css')) res.type('text/css');
+  }
+}));
 
 router.get('/favicon.ico', (req, res) => {
   const file = paths.assetPath('public', 'favicon.ico');
@@ -196,7 +203,8 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// ── RUTAS PÚBLICAS ────────────────────────────────────────
+// Vista pública: public/index.html (generado por Vue — npm run build:public)
+// Respaldo vanilla sin servir: public/index.html.legacy
 router.get('/', (req, res) => {
   sendHtmlWithBase(paths.assetPath('public', 'index.html'), res);
 });

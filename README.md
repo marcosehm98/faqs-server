@@ -74,11 +74,14 @@ faq-server/
 ├── server.js          ← Servidor principal
 ├── db.js              ← Conexión y consultas MySQL
 ├── .env.example       ← Plantilla de credenciales (copiar a .env)
+├── frontend-public/   ← Código fuente Vue (vista pública)
+│   └── src/           ← Componentes, estilos y lógica
+├── public/
+│   ├── index.html     ← Build Vue (generado — no editar a mano)
+│   ├── assets/        ← JS/CSS del bundle Vue (servidos en /assets/)
+│   └── index.html.legacy ← Respaldo HTML vanilla (archivo, no se sirve)
 ├── scripts/
 │   └── schema.sql     ← Script para crear la base de datos
-├── uploads/           ← Archivos subidos (imágenes, PDFs, etc.)
-├── public/
-│   └── index.html     ← Vista pública
 └── admin/
     └── index.html     ← Panel admin (URL /admin-panel)
 ```
@@ -100,6 +103,8 @@ La tabla `faqs` guarda cada pregunta con:
 
 ## 💡 Tips
 
+- **Vista pública Vue:** edita `frontend-public/` y compila con `npm run build:public` (o `npm run build:win` para el .exe)
+- El servidor solo sirve `public/index.html` + `public/assets/`; `index.html.legacy` es respaldo y no se usa en runtime
 - Los archivos subidos se guardan en `uploads/`
 - Para backup de preguntas usa **Exportar JSON** en el panel admin → Configuración
 - Si cambias el puerto, edita `PORT` en `.env`
