@@ -1,0 +1,8 @@
+.DS_Store
+node_modules/
+.env
+uploads/*
+!uploads/.gitkeep
+data/faqs.json
+dist/
+.pkg-cache/

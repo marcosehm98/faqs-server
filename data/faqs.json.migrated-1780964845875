@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "category": "General",
+    "order": 1,
+    "question": "¿Cómo puedo contactar al soporte?",
+    "answer": "Puedes contactarnos por correo a soporte@tuempresa.com o por WhatsApp al +52 55 1234-5678, de lunes a viernes de 9:00 a 18:00 hrs.",
+    "tags": [
+      "contacto",
+      "soporte"
+    ],
+    "attachments": [],
+    "createdAt": 1780964193797
+  },
+  {
+    "id": 2,
+    "category": "Pagos",
+    "order": 1,
+    "question": "¿Qué métodos de pago aceptan?",
+    "answer": "Aceptamos tarjetas de crédito/débito (Visa, Mastercard, AmEx), transferencia bancaria, PayPal y efectivo en tiendas de conveniencia (OXXO, 7-Eleven).",
+    "tags": [
+      "pago",
+      "tarjeta"
+    ],
+    "attachments": [],
+    "createdAt": 1780964193797
+  },
+  {
+    "id": 3,
+    "category": "Envíos",
+    "order": 1,
+    "question": "¿Cuánto tarda en llegar mi pedido?",
+    "answer": "Ciudad de México: 1-2 días hábiles. Interior de la República: 3-5 días. Zonas extendidas: 5-7 días. Procesamos envíos de lunes a viernes.",
+    "tags": [
+      "envío",
+      "entrega"
+    ],
+    "attachments": [],
+    "createdAt": 1780964193797
+  }
+]
