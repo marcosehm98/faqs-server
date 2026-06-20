@@ -25,7 +25,7 @@ const CATEGORY_SORT = {
 const BASE = 100;
 
 async function main() {
-  const now = Date.now();
+  const now = new Date();
   const conn = await db.pool.getConnection();
 
   try {

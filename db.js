@@ -105,6 +105,43 @@ const FAQ_ORDER_BY = `
            f.created_at ASC,
            f.id ASC`;
 
+/** Convierte BIGINT (ms), DATETIME o Date de MySQL a timestamp en milisegundos para la API */
+function toTimestampMs(val) {
+  if (val == null || val === '') return undefined;
+  if (val instanceof Date) return val.getTime();
+  const n = Number(val);
+  if (!Number.isNaN(n) && n > 1e12) return n;
+  if (!Number.isNaN(n) && n > 1e9 && n < 1e12) return n * 1000;
+  const d = new Date(val);
+  return Number.isNaN(d.getTime()) ? undefined : d.getTime();
+}
+
+function sqlNow() {
+  return new Date();
+}
+
+async function migrateFaqTimestampsToDatetime(conn) {
+  const [cols] = await conn.query("SHOW COLUMNS FROM faqs WHERE Field = 'created_at'");
+  if (!cols.length || !String(cols[0].Type).toLowerCase().includes('bigint')) return;
+
+  console.log('[db] Migrando timestamps de faqs a DATETIME legible...');
+
+  for (const field of ['created_at', 'updated_at', 'deleted_at']) {
+    const tmp = `${field}_dt`;
+    await conn.query(`ALTER TABLE faqs ADD COLUMN ${tmp} DATETIME(0) NULL`);
+    if (field === 'created_at') {
+      await conn.query(`UPDATE faqs SET ${tmp} = FROM_UNIXTIME(${field} / 1000)`);
+    } else {
+      await conn.query(
+        `UPDATE faqs SET ${tmp} = IF(${field} IS NOT NULL, FROM_UNIXTIME(${field} / 1000), NULL)`
+      );
+    }
+    await conn.query(`ALTER TABLE faqs DROP COLUMN ${field}`);
+    const notNull = field === 'created_at' ? 'NOT NULL' : 'NULL DEFAULT NULL';
+    await conn.query(`ALTER TABLE faqs CHANGE ${tmp} ${field} DATETIME(0) ${notNull}`);
+  }
+}
+
 function rowToFaq(row) {
   const groupName = row.group_name || null;
   const subName = row.category_name || null;
@@ -121,9 +158,9 @@ function rowToFaq(row) {
     answer: row.answer,
     tags: typeof row.tags === 'string' ? JSON.parse(row.tags) : (row.tags || []),
     attachments: typeof row.attachments === 'string' ? JSON.parse(row.attachments) : (row.attachments || []),
-    createdAt: Number(row.created_at),
-    updatedAt: row.updated_at ? Number(row.updated_at) : undefined,
-    deletedAt: row.deleted_at ? Number(row.deleted_at) : undefined,
+    createdAt: toTimestampMs(row.created_at),
+    updatedAt: toTimestampMs(row.updated_at),
+    deletedAt: toTimestampMs(row.deleted_at),
     isAnnulled: !!row.deleted_at
   };
 }
@@ -140,9 +177,9 @@ async function initDatabase() {
         answer TEXT NOT NULL,
         tags JSON NOT NULL,
         attachments JSON NOT NULL,
-        created_at BIGINT NOT NULL,
-        updated_at BIGINT NULL,
-        deleted_at BIGINT NULL,
+        created_at DATETIME(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME(0) NULL DEFAULT NULL,
+        deleted_at DATETIME(0) NULL DEFAULT NULL,
         INDEX idx_category (category),
         INDEX idx_sort_order (sort_order),
         INDEX idx_deleted_at (deleted_at)
@@ -180,6 +217,7 @@ async function initDatabase() {
         INDEX idx_cat_sort (sort_order)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+    await migrateFaqTimestampsToDatetime(conn);
     await migrateCategoriesFromLegacy(conn);
     await conn.query(`
       CREATE TABLE IF NOT EXISTS site_settings (
@@ -648,7 +686,7 @@ async function getFAQStats() {
     active: Number(rows[0].active) || 0,
     annulled: Number(rows[0].annulled) || 0,
     categories: Number(rows[0].categories) || 0,
-    lastUpdatedAt: rows[0].last_updated ? Number(rows[0].last_updated) : null,
+    lastUpdatedAt: toTimestampMs(rows[0].last_updated) ?? null,
     attachments: Number(attRows[0].attachments) || 0
   };
 }
@@ -761,7 +799,7 @@ async function resolveCategoryForFAQ({ category, categoryId, groupId }) {
 }
 
 async function createFAQ({ question, answer, category, categoryId, groupId, tags, order, attachments }) {
-  const now = Date.now();
+  const now = sqlNow();
   const resolved = await resolveCategoryForFAQ({ category, categoryId, groupId });
   if (!resolved.groupId) throw new Error('Selecciona un grupo (Operativo o Contable)');
   const [result] = await pool.query(
@@ -783,7 +821,7 @@ async function createFAQ({ question, answer, category, categoryId, groupId, tags
 }
 
 async function updateFAQ(id, { question, answer, category, categoryId, groupId, tags, order, attachments }) {
-  const now = Date.now();
+  const now = sqlNow();
   const resolved = await resolveCategoryForFAQ({ category, categoryId, groupId });
   if (!resolved.groupId) throw new Error('Selecciona un grupo (Operativo o Contable)');
   const [result] = await pool.query(
@@ -809,7 +847,7 @@ async function updateFAQ(id, { question, answer, category, categoryId, groupId, 
 }
 
 async function annulFAQ(id) {
-  const now = Date.now();
+  const now = sqlNow();
   const [result] = await pool.query(
     'UPDATE faqs SET deleted_at = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL',
     [now, now, id]
@@ -818,7 +856,7 @@ async function annulFAQ(id) {
 }
 
 async function restoreFAQ(id) {
-  const now = Date.now();
+  const now = sqlNow();
   const [result] = await pool.query(
     'UPDATE faqs SET deleted_at = NULL, updated_at = ? WHERE id = ? AND deleted_at IS NOT NULL',
     [now, id]
