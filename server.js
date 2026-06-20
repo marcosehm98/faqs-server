@@ -112,6 +112,13 @@ router.get('/logo-logihub.svg', (req, res) => {
   res.type('svg').sendFile(file);
 });
 
+router.get('/faq-content.js', (req, res) => {
+  const file = paths.assetPath('public', 'faq-content.js');
+  if (!fs.existsSync(file)) return res.status(404).end();
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.type('application/javascript').sendFile(file);
+});
+
 // ── MULTER ───────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOADS_DIR),

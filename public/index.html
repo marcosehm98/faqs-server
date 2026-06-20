@@ -127,7 +127,13 @@
   .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1); }
   .faq-card.open .faq-answer { max-height: 3000px; border-top: 1px solid var(--border); }
   .faq-answer-inner { padding: 20px; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.75; }
-  .faq-answer-inner p { white-space: pre-wrap; }
+  .faq-answer-inner p { margin: 0 0 12px; }
+  .faq-answer-inner p:last-child { margin-bottom: 0; }
+  .faq-answer-inner strong { font-weight: 600; color: var(--text-primary); }
+  .faq-answer-inner em { font-style: italic; }
+  .faq-answer-inner ul { margin: 8px 0 12px; padding-left: 1.35rem; }
+  .faq-answer-inner li { margin-bottom: 6px; }
+  .faq-answer-inner li:last-child { margin-bottom: 0; }
 
   .faq-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
   .tag { padding: 3px 10px; border-radius: 99px; background: var(--tag-bg); color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: background 0.15s; }
@@ -327,6 +333,17 @@ const BASE = '/faqs-logihub';
 function apiUrl(path) {
   const base = location.pathname.startsWith(BASE) ? BASE : '';
   return base + path;
+}
+
+function loadFaqContentScript() {
+  if (window.FaqContent) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = apiUrl('/faq-content.js');
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('faq-content.js'));
+    document.head.appendChild(s);
+  });
 }
 (function initFavicon() {
   const el = document.getElementById('faviconLink');
@@ -674,7 +691,7 @@ function renderCard(f, hl='') {
     </div>
     <div class="faq-answer">
       <div class="faq-answer-inner">
-        <p>${hlText(esc(f.answer), hl)}</p>
+        <div class="faq-answer-body">${highlightFaqHtml(formatFaqContent(f.answer), hl)}</div>
         ${tags ? `<div class="faq-tags">${tags}</div>` : ''}
         ${attHtml}
         ${updatedHtml}
@@ -760,21 +777,37 @@ function fileIcon(type) {
 }
 
 function hlText(html, q) {
-  if (!q) return html;
-  const e = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  return html.replace(new RegExp(`(${e})`,'gi'),'<mark class="highlight">$1</mark>');
+  return highlightFaqHtml(html, q);
+}
+
+function formatFaqContent(text) {
+  return FaqContent.formatFaqContent(text);
+}
+
+function highlightFaqHtml(html, q) {
+  return FaqContent.highlightFaqHtml(html, q);
 }
 
 function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return FaqContent.esc(s);
 }
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeLightbox(); closeSuggestModal(); }
 });
 
-loadSiteConfig();
-loadFAQs();
+loadFaqContentScript().then(() => {
+  loadSiteConfig();
+  loadFAQs();
+}).catch(() => {
+  window.FaqContent = {
+    esc: (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
+    formatFaqContent: (t) => `<p>${String(t ?? '')}</p>`,
+    highlightFaqHtml: (h, q) => h
+  };
+  loadSiteConfig();
+  loadFAQs();
+});
 </script>
 </body>
 </html>

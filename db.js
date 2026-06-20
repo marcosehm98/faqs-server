@@ -97,6 +97,14 @@ const FAQ_JOINS = `
   LEFT JOIN faq_categories g ON f.group_id = g.id
   LEFT JOIN faq_categories c ON f.category_id = c.id`;
 
+/** Grupo padre → subcategoría → orden manual dentro de subcategoría */
+const FAQ_ORDER_BY = `
+  ORDER BY COALESCE(g.sort_order, 999) ASC,
+           COALESCE(c.sort_order, 0) ASC,
+           f.sort_order ASC,
+           f.created_at ASC,
+           f.id ASC`;
+
 function rowToFaq(row) {
   const groupName = row.group_name || null;
   const subName = row.category_name || null;
@@ -566,7 +574,7 @@ async function getAllFAQs(includeAnnulled = false) {
     `SELECT f.*, g.name AS group_name, g.icon AS group_icon,
             c.name AS category_name, c.icon AS category_icon
      FROM faqs f ${FAQ_JOINS} ${whereSql}
-     ORDER BY f.sort_order ASC, f.created_at ASC`,
+     ${FAQ_ORDER_BY}`,
     params
   );
   return rows.map(rowToFaq);
@@ -588,7 +596,7 @@ async function getFAQsPaginated({ page = 1, limit = 25, includeAnnulled = false,
     `SELECT f.*, g.name AS group_name, g.icon AS group_icon,
             c.name AS category_name, c.icon AS category_icon
      FROM faqs f ${FAQ_JOINS} ${whereSql}
-     ORDER BY f.sort_order ASC, f.created_at ASC LIMIT ? OFFSET ?`,
+     ${FAQ_ORDER_BY} LIMIT ? OFFSET ?`,
     [...params, safeLimit, offset]
   );
 
@@ -646,14 +654,31 @@ async function getFAQStats() {
 }
 
 async function getPageForFAQId(id, limit, filters = {}) {
-  const faq = await getFAQById(id, { includeAnnulled: filters.includeAnnulled });
-  if (!faq) return null;
+  const [faqRows] = await pool.query(
+    `SELECT f.sort_order, f.created_at, g.sort_order AS g_sort, c.sort_order AS c_sort
+     FROM faqs f ${FAQ_JOINS} WHERE f.id = ? LIMIT 1`,
+    [id]
+  );
+  if (!faqRows.length) return null;
+  const faq = faqRows[0];
 
   const { whereSql, params } = buildFAQFilters(filters);
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS pos FROM faqs f ${FAQ_JOINS} ${whereSql}
-     AND (f.sort_order < ? OR (f.sort_order = ? AND f.created_at < ?) OR (f.sort_order = ? AND f.created_at = ? AND f.id < ?))`,
-    [...params, faq.order, faq.order, faq.createdAt, faq.order, faq.createdAt, faq.id]
+     AND (
+       COALESCE(g.sort_order, 999) < COALESCE(?, 999)
+       OR (COALESCE(g.sort_order, 999) = COALESCE(?, 999) AND COALESCE(c.sort_order, 0) < COALESCE(?, 0))
+       OR (COALESCE(g.sort_order, 999) = COALESCE(?, 999) AND COALESCE(c.sort_order, 0) = COALESCE(?, 0) AND f.sort_order < ?)
+       OR (COALESCE(g.sort_order, 999) = COALESCE(?, 999) AND COALESCE(c.sort_order, 0) = COALESCE(?, 0) AND f.sort_order = ? AND f.created_at < ?)
+       OR (COALESCE(g.sort_order, 999) = COALESCE(?, 999) AND COALESCE(c.sort_order, 0) = COALESCE(?, 0) AND f.sort_order = ? AND f.created_at = ? AND f.id < ?)
+     )`,
+    [
+      ...params,
+      faq.g_sort, faq.g_sort, faq.c_sort,
+      faq.g_sort, faq.c_sort, faq.sort_order,
+      faq.g_sort, faq.c_sort, faq.sort_order, faq.created_at,
+      faq.g_sort, faq.c_sort, faq.sort_order, faq.created_at, id
+    ]
   );
   const pos = rows[0].pos;
   const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);

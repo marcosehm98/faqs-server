@@ -81,6 +81,18 @@
   textarea.form-control { resize: vertical; min-height: 120px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .form-hint { font-size: 0.76rem; color: var(--text-2); margin-top: 5px; }
+  .answer-preview {
+    margin-top: 10px; padding: 12px 14px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 0.88rem; line-height: 1.7; color: var(--text-2);
+  }
+  .answer-preview-label { font-size: 0.72rem; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .answer-preview strong { font-weight: 600; color: var(--text); }
+  .answer-preview em { font-style: italic; }
+  .answer-preview ul { margin: 8px 0; padding-left: 1.25rem; }
+  .answer-preview li { margin-bottom: 4px; }
+  .answer-preview p { margin: 0 0 10px; }
+  .answer-preview p:last-child { margin-bottom: 0; }
 
   /* ─ PAGE HEADER ─ */
   .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
@@ -424,7 +436,10 @@
       </div>
       <div class="form-group">
         <label class="form-label">Respuesta</label>
-        <textarea class="form-control" id="fA" placeholder="Escribe la respuesta completa…"></textarea>
+        <textarea class="form-control" id="fA" placeholder="Escribe la respuesta completa…" oninput="updateAnswerPreview()"></textarea>
+        <div class="form-hint">Puedes usar <code>**negrita**</code>, <code>*cursiva*</code>, listas con <code>- ítem</code> y párrafos separados por una línea en blanco.</div>
+        <div class="answer-preview-label">Vista previa</div>
+        <div class="answer-preview" id="answerPreview"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Etiquetas <span style="font-weight:400;text-transform:none">(separadas por coma)</span></label>
@@ -503,6 +518,30 @@ const BASE = '/faqs-logihub';
 function apiUrl(path) {
   const base = location.pathname.startsWith(BASE) ? BASE : '';
   return base + path;
+}
+
+function loadFaqContentScript() {
+  if (window.FaqContent) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = apiUrl('/faq-content.js');
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+function updateAnswerPreview() {
+  const el = document.getElementById('answerPreview');
+  if (!el) return;
+  const text = document.getElementById('fA')?.value || '';
+  if (!text.trim()) {
+    el.innerHTML = '<span style="opacity:0.55">La vista previa aparecerá aquí…</span>';
+    return;
+  }
+  el.innerHTML = window.FaqContent
+    ? FaqContent.formatFaqContent(text)
+    : esc(text);
 }
 (function initFavicon() {
   const el = document.getElementById('faviconLink');
@@ -795,7 +834,9 @@ function openAdd(prefillQuestion = '') {
   populateFaqCategorySelects();
   if (prefillQuestion) document.getElementById('fQ').value = prefillQuestion;
   document.getElementById('fileChips').innerHTML = '';
+  updateAnswerPreview();
   document.getElementById('modalOverlay').classList.add('visible');
+
   setTimeout(() => (prefillQuestion ? document.getElementById('fA') : document.getElementById('fQ')).focus(), 120);
 }
 
@@ -817,6 +858,7 @@ async function openEdit(id) {
   document.getElementById('fTags').value = (f.tags||[]).join(', ');
   document.getElementById('fOrder').value = f.order >= 999 ? '' : (f.order||'');
   renderChips();
+  updateAnswerPreview();
   document.getElementById('modalOverlay').classList.add('visible');
 }
 
@@ -1217,7 +1259,7 @@ async function importJSON(e) {
     const text = await file.text();
     const data = JSON.parse(text);
     if (!Array.isArray(data)) throw new Error();
-    if (!confirm(`¿Importar ${data.length} preguntas? Esto reemplazará las existentes.`)) return;
+    if (!confirm(`¿Importar ${data.length} preguntas nuevas?\n\nSe añadirán al listado actual. Las preguntas que ya tienes no se borran ni se modifican.`)) return;
     // Save each via API
     for (const f of data) {
       const r = await fetch(apiUrl('/api/admin/faqs'), {
@@ -1389,7 +1431,7 @@ document.getElementById('catModalOverlay').addEventListener('click', e => { if(e
 document.addEventListener('paste', e => { onModalPaste(e); onSettingsPaste(e); });
 document.getElementById('confirmOverlay').addEventListener('click', e => { if(e.target.id==='confirmOverlay') closeConfirm(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape') { closeModal(); closeCatModal(); closeConfirm(); } });
-tryRestoreSession();
+loadFaqContentScript().catch(() => {}).finally(() => tryRestoreSession());
 </script>
 </body>
 </html>

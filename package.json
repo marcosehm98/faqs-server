@@ -20,6 +20,7 @@
   "pkg": {
     "assets": [
       "public/index.html",
+      "public/faq-content.js",
       "public/favicon.ico",
       "public/logo-logihub.svg",
       "admin/index.html",
