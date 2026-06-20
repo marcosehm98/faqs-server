@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Reordena FAQs del grupo Operaciones (group_id=2) y subcategorías.
- * node scripts/reorder-operaciones.js
+ * node archive/scripts/reorder-operaciones.js
  */
 require('dotenv').config();
-const db = require('../db');
+const db = require('../../db');
 
 const FAQ_ORDER = {
   3: [18, 8, 19, 20, 21],

@@ -203,8 +203,8 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// Vista pública: public/index.html (generado por Vue — npm run build:public)
-// Respaldo vanilla sin servir: public/index.html.legacy
+// Vista pública: public/index.html (build Vue — npm run build:public)
+// HTML vanilla archivado en archive/inicial/public-index.html
 router.get('/', (req, res) => {
   sendHtmlWithBase(paths.assetPath('public', 'index.html'), res);
 });
@@ -576,7 +576,8 @@ router.delete('/api/admin/upload/:filename', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// Panel admin: admin/index.html (generado por Vue — npm run build:admin)
+// Panel admin: admin/index.html (build Vue — npm run build:admin)
+// HTML vanilla archivado en archive/inicial/admin-index.html
 router.use('/admin-panel/assets', express.static(paths.assetPath('admin', 'assets'), {
   maxAge: '1h',
   setHeaders(res, filePath) {

@@ -1,9 +1,9 @@
 /**
  * Añade **negrita** a FAQs que no tienen formato markdown en la respuesta.
- * Uso: node scripts/bold-missing-faqs.js
+ * Uso: node archive/scripts/bold-missing-faqs.js
  */
 require('dotenv').config();
-const db = require('../db');
+const db = require('../../db');
 
 const UPDATES = {
   5: `Para dar de baja una tarea, puedes ingresar a **Mis tareas** o **Tareas del equipo**. Una vez ubicada la tarea correspondiente, selecciona el ícono **">"** resaltado en color azul (ver imagen adjunta).

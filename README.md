@@ -75,19 +75,20 @@ faq-server/
 ├── db.js              ← Conexión y consultas MySQL
 ├── .env.example       ← Plantilla de credenciales (copiar a .env)
 ├── frontend-public/   ← Código fuente Vue (vista pública)
-│   └── src/
 ├── frontend-admin/    ← Código fuente Vue (panel admin)
-│   └── src/
-├── public/
-│   ├── index.html     ← Build Vue público (generado)
-│   ├── assets/        ← JS/CSS vista pública
-│   └── index.html.legacy ← Respaldo HTML vanilla (no se sirve)
-├── admin/
-│   ├── index.html     ← Build Vue admin (generado)
-│   ├── assets/        ← JS/CSS panel admin
-│   └── index.html.legacy ← Respaldo HTML vanilla (no se sirve)
+├── public/            ← Build Vue público (index.html + assets/)
+├── admin/             ← Build Vue admin (index.html + assets/)
+├── archive/           ← HTML inicial, scripts y datos históricos (no se sirven)
+│   ├── inicial/       ← HTML vanilla pre-Vue
+│   ├── scripts/       ← Scripts de mantenimiento ya usados
+│   └── data/          ← JSON de migración / borradores
+├── data/
+│   └── logihub-faqs-import.json  ← JSON para importar en admin
 ├── scripts/
-│   └── schema.sql     ← Script para crear la base de datos
+│   ├── build-windows.js
+│   ├── generate-logihub-faqs.mjs
+│   ├── schema.sql
+│   └── nginx-faqs-logihub.conf
 └── uploads/           ← Archivos subidos
 ```
 
@@ -111,7 +112,7 @@ La tabla `faqs` guarda cada pregunta con:
 - **Vista pública Vue:** edita `frontend-public/` → `npm run build:public`
 - **Panel admin Vue:** edita `frontend-admin/` → `npm run build:admin`
 - **Ambos:** `npm run build:frontend` (incluido en `npm run build:win`)
-- El servidor sirve `public/index.html` + `admin/index.html` compilados; los `.legacy` son respaldo sin uso en runtime
+- El servidor solo sirve los builds Vue en `public/` y `admin/`; lo histórico está en `archive/`
 - Los archivos subidos se guardan en `uploads/`
 - Para backup de preguntas usa **Exportar JSON** en el panel admin → Configuración
 - Si cambias el puerto, edita `PORT` en `.env`
